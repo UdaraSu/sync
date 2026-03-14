@@ -118,4 +118,24 @@ class LabourEquipmentPostService {
 
     return equipmentId;
   }
+
+  /// Stream of labour posts created by the current user.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> myLabourPostsStream() {
+    final user = _auth.currentUser;
+    if (user == null) return const Stream.empty();
+    return _db
+        .collection('labours')
+        .where('createdByUid', isEqualTo: user.uid)
+        .snapshots();
+  }
+
+  /// Stream of equipment posts created by the current user.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> myEquipmentPostsStream() {
+    final user = _auth.currentUser;
+    if (user == null) return const Stream.empty();
+    return _db
+        .collection('equipments')
+        .where('createdByUid', isEqualTo: user.uid)
+        .snapshots();
+  }
 }

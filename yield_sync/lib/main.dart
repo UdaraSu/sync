@@ -33,6 +33,10 @@ import 'ui/screens/admin_profile_screen.dart';
 import 'ui/screens/profile_screen.dart';
 import 'ui/screens/add_labour_post_screen.dart';
 import 'ui/screens/add_equipment_post_screen.dart';
+import 'ui/screens/my_labour_posts_screen.dart';
+import 'ui/screens/my_equipment_posts_screen.dart';
+import 'ui/screens/my_labour_bookings_screen.dart';
+import 'ui/screens/my_equipment_bookings_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +86,10 @@ class YieldSyncApp extends StatelessWidget {
         AppRoutes.equipmentProfile: (_) => const EquipmentProfileScreen(),
         AppRoutes.addLabourPost: (_) => const AddLabourPostScreen(),
         AppRoutes.addEquipmentPost: (_) => const AddEquipmentPostScreen(),
+        AppRoutes.myLabourPosts: (_) => const MyLabourPostsScreen(),
+        AppRoutes.myEquipmentPosts: (_) => const MyEquipmentPostsScreen(),
+        AppRoutes.myLabourBookings: (_) => const MyLabourBookingsScreen(),
+        AppRoutes.myEquipmentBookings: (_) => const MyEquipmentBookingsScreen(),
       },
     );
   }

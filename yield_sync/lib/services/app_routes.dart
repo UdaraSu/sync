@@ -40,4 +40,9 @@ class AppRoutes {
 
   static const addLabourPost = "/add-labour-post";
   static const addEquipmentPost = "/add-equipment-post";
+
+  static const myLabourPosts = "/my-labour-posts";
+  static const myEquipmentPosts = "/my-equipment-posts";
+  static const myLabourBookings = "/my-labour-bookings";
+  static const myEquipmentBookings = "/my-equipment-bookings";
 }

@@ -58,6 +58,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      drawer: const _HomeDrawer(),
       body: const SafeArea(child: _HomeDashboardView()),
 
       // ✅ Bottom home pill (kept, slightly improved)
@@ -103,6 +104,229 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ===================== LEFT SIDEBAR DRAWER =====================
+class _HomeDrawer extends StatelessWidget {
+  const _HomeDrawer();
+
+  Future<void> _logout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => AlertDialog(
+        title:
+            const Text("Logout", style: TextStyle(fontWeight: FontWeight.w900)),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.darkGreen,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Logout",
+                style: TextStyle(fontWeight: FontWeight.w900)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await FirebaseAuth.instance.signOut();
+    if (!context.mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          children: [
+            const SizedBox(height: 8),
+            _DrawerHeader(),
+            const Divider(height: 24),
+            _DrawerSectionTitle("Your ads"),
+            _DrawerTile(
+              icon: Icons.groups_rounded,
+              label: "Labour",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.myLabourPosts);
+              },
+            ),
+            _DrawerTile(
+              icon: Icons.agriculture_rounded,
+              label: "Equipment",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.myEquipmentPosts);
+              },
+            ),
+            const Divider(height: 24),
+            _DrawerSectionTitle("Your bookings"),
+            _DrawerTile(
+              icon: Icons.groups_rounded,
+              label: "Labour",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.myLabourBookings);
+              },
+            ),
+            _DrawerTile(
+              icon: Icons.agriculture_rounded,
+              label: "Equipment",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.myEquipmentBookings);
+              },
+            ),
+            const Divider(height: 24),
+            _DrawerSectionTitle("Useful others"),
+            _DrawerTile(
+              icon: Icons.person_rounded,
+              label: "Profile",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.profile);
+              },
+            ),
+            _DrawerTile(
+              icon: Icons.logout_rounded,
+              label: "Logout",
+              onTap: () {
+                Navigator.pop(context);
+                _logout(context);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.eco_rounded, color: AppColors.darkGreen),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "YieldSync",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  "Menu",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerSectionTitle extends StatelessWidget {
+  final String title;
+
+  const _DrawerSectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark.withOpacity(0.6),
+          fontSize: 12,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _DrawerTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: AppColors.darkGreen, size: 22),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark,
+          fontSize: 14,
+        ),
+      ),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 14,
+        color: AppColors.textDark.withOpacity(0.4),
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }
@@ -176,48 +400,42 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
         title: "Fertiliser Suggest",
         subtitle: "Best NPK plan",
         icon: Icons.science_rounded,
-        bg: const Color(0x1466D9AC),
-        iconBg: const Color(0x2666D9AC),
+        iconBg: const Color(0xFF35D6A6),
         route: AppRoutes.fertilizerForm,
       ),
       _ActionItem(
         title: "Hire Labour",
-        subtitle: "Skilled workers",
+        subtitle: "Skilled farm workers for all crops",
         icon: Icons.groups_rounded,
-        bg: const Color(0x141C9BE8),
-        iconBg: const Color(0x261C9BE8),
+        iconBg: const Color(0xFF15B77E),
         route: AppRoutes.laborHire,
       ),
       _ActionItem(
         title: "Rent Equipment",
-        subtitle: "Tools & tractors",
+        subtitle: "Tractors, harvesters & more",
         icon: Icons.agriculture_rounded,
-        bg: const Color(0x14FFB74D),
-        iconBg: const Color(0x26FFB74D),
+        iconBg: const Color(0xFF1C9BE8),
         route: AppRoutes.equipmentRent,
       ),
       _ActionItem(
         title: "Match Crop",
         subtitle: "Smart crop pick",
         icon: Icons.spa_rounded,
-        bg: const Color(0x149B8CFF),
-        iconBg: const Color(0x269B8CFF),
+        iconBg: const Color(0xFF9B8CFF),
         route: AppRoutes.matchCrop,
       ),
       _ActionItem(
         title: "Market",
         subtitle: "Live prices",
         icon: Icons.storefront_rounded,
-        bg: const Color(0x1466D9AC),
-        iconBg: const Color(0x2666D9AC),
+        iconBg: const Color(0xFFFFB74D),
         route: AppRoutes.market,
       ),
       _ActionItem(
         title: "Soil Quality",
         subtitle: "pH / EC / NPK",
         icon: Icons.grass_rounded,
-        bg: const Color(0x141C9BE8),
-        iconBg: const Color(0x261C9BE8),
+        iconBg: const Color(0xFF2BB3D1),
         route: AppRoutes.soilQuality,
       ),
     ];
@@ -260,9 +478,25 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Row (Brand + profile + logout)
+                    // Top Row (Menu + Brand + profile + logout)
                     Row(
                       children: [
+                        IconButton(
+                          onPressed: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          icon: Icon(
+                            Icons.menu_rounded,
+                            color: Colors.white.withOpacity(0.95),
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
                         Container(
                           width: 44,
                           height: 44,
@@ -493,32 +727,20 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                 Row(
                   children: [
                     Container(
-                      width: 38,
-                      height: 38,
+                      width: 4,
+                      height: 22,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.flash_on_rounded,
-                          color: AppColors.darkGreen),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        "Quick Actions",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textDark,
-                        ),
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    Text(
-                      "Tap any card",
+                    const SizedBox(width: 12),
+                    const Text(
+                      "Quick Actions",
                       style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark.withOpacity(0.55),
-                        fontSize: 12,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ],
@@ -575,7 +797,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 1.32,
+                    childAspectRatio: 0.92,
                   ),
                   itemBuilder: (context, i) {
                     final a = actions[i];
@@ -923,7 +1145,6 @@ class _ActionItem {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color bg;
   final Color iconBg;
   final String? route;
 
@@ -931,7 +1152,6 @@ class _ActionItem {
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.bg,
     required this.iconBg,
     this.route,
   });
@@ -945,31 +1165,42 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: item.bg,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: item.iconBg,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(item.icon, color: AppColors.darkGreen),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+            child: Stack(
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: item.iconBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(item.icon, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
                       item.title,
                       maxLines: 1,
@@ -977,26 +1208,41 @@ class _ActionCard extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: AppColors.textDark,
-                        fontSize: 13.4,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       item.subtitle,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark.withOpacity(0.55),
-                        fontSize: 11.6,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark.withOpacity(0.6),
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14, color: AppColors.textDark.withOpacity(0.35)),
-            ],
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.textDark.withOpacity(0.09),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: AppColors.textDark.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
