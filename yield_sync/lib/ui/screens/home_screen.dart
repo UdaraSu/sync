@@ -150,68 +150,83 @@ class _HomeDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Column(
           children: [
-            const SizedBox(height: 8),
-            _DrawerHeader(),
-            const Divider(height: 24),
-            _DrawerSectionTitle("Your ads"),
-            _DrawerTile(
-              icon: Icons.groups_rounded,
-              label: "Labour",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AppRoutes.myLabourPosts);
-              },
+            const _DrawerHeader(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 24),
+                children: [
+                  _DrawerSectionTitle("Your ads"),
+                  const SizedBox(height: 8),
+                  _DrawerTile(
+                    icon: Icons.groups_rounded,
+                    label: "Labour",
+                    iconColor: const Color(0xFF15B77E),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.myLabourPosts);
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  _DrawerTile(
+                    icon: Icons.agriculture_rounded,
+                    label: "Equipment",
+                    iconColor: const Color(0xFF1C9BE8),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.myEquipmentPosts);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  _DrawerSectionTitle("Your bookings"),
+                  const SizedBox(height: 8),
+                  _DrawerTile(
+                    icon: Icons.calendar_today_rounded,
+                    label: "Labour",
+                    iconColor: const Color(0xFF15B77E),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.myLabourBookings);
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  _DrawerTile(
+                    icon: Icons.agriculture_rounded,
+                    label: "Equipment",
+                    iconColor: const Color(0xFF1C9BE8),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.myEquipmentBookings);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  _DrawerSectionTitle("Account"),
+                  const SizedBox(height: 8),
+                  _DrawerTile(
+                    icon: Icons.person_rounded,
+                    label: "Profile",
+                    iconColor: const Color(0xFF9B8CFF),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.profile);
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  _DrawerTile(
+                    icon: Icons.logout_rounded,
+                    label: "Logout",
+                    iconColor: AppColors.error,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _logout(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-            _DrawerTile(
-              icon: Icons.agriculture_rounded,
-              label: "Equipment",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AppRoutes.myEquipmentPosts);
-              },
-            ),
-            const Divider(height: 24),
-            _DrawerSectionTitle("Your bookings"),
-            _DrawerTile(
-              icon: Icons.groups_rounded,
-              label: "Labour",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AppRoutes.myLabourBookings);
-              },
-            ),
-            _DrawerTile(
-              icon: Icons.agriculture_rounded,
-              label: "Equipment",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AppRoutes.myEquipmentBookings);
-              },
-            ),
-            const Divider(height: 24),
-            _DrawerSectionTitle("Useful others"),
-            _DrawerTile(
-              icon: Icons.person_rounded,
-              label: "Profile",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AppRoutes.profile);
-              },
-            ),
-            _DrawerTile(
-              icon: Icons.logout_rounded,
-              label: "Logout",
-              onTap: () {
-                Navigator.pop(context);
-                _logout(context);
-              },
-            ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -224,21 +239,32 @@ class _DrawerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      decoration: const BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+        ),
+      ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.18),
+              color: Colors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
             ),
-            child: const Icon(Icons.eco_rounded, color: AppColors.darkGreen),
+            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 26),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -246,15 +272,17 @@ class _DrawerHeader extends StatelessWidget {
                   "YieldSync",
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
-                    color: AppColors.textDark,
-                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.98),
+                    fontSize: 18,
+                    letterSpacing: -0.3,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  "Menu",
+                  "Navigation",
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.muted,
+                    color: Colors.white.withOpacity(0.75),
                     fontSize: 12,
                   ),
                 ),
@@ -275,15 +303,28 @@ class _DrawerSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: AppColors.textDark.withOpacity(0.6),
-          fontSize: 12,
-          letterSpacing: 0.5,
-        ),
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark.withOpacity(0.55),
+              fontSize: 11,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -292,41 +333,71 @@ class _DrawerSectionTitle extends StatelessWidget {
 class _DrawerTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _DrawerTile({
     required this.icon,
     required this.label,
     required this.onTap,
-  });
+    Color? iconColor,
+  }) : iconColor = iconColor ?? AppColors.darkGreen;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: AppColors.textDark.withOpacity(0.35),
+                ),
+              ],
+            ),
+          ),
         ),
-        child: Icon(icon, color: AppColors.darkGreen, size: 22),
       ),
-      title: Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
-          fontSize: 14,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios_rounded,
-        size: 14,
-        color: AppColors.textDark.withOpacity(0.4),
-      ),
-      onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

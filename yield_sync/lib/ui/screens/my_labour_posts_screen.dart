@@ -180,91 +180,144 @@ class _PostCard extends StatelessWidget {
     required this.onTap,
   });
 
+  static const _iconBg = Color(0xFF15B77E);
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: _iconBg,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.groups_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
-                  child: const Icon(Icons.groups_rounded, color: AppColors.darkGreen),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textDark,
-                          fontSize: 15,
-                        ),
-                      ),
-                      if (labourType.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          labourType,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark.withOpacity(0.65),
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textDark,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (labourType.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            labourType,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textDark.withOpacity(0.65),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        if (location.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_rounded,
+                                size: 14,
+                                color: AppColors.textDark.withOpacity(0.5),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  location,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark.withOpacity(0.55),
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          "LKR ${hourlyRate.toStringAsFixed(0)}/hr",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.darkGreen,
                             fontSize: 13,
                           ),
                         ),
-                      ],
-                      if (location.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_rounded,
-                                size: 14, color: AppColors.textDark.withOpacity(0.5)),
-                            const SizedBox(width: 4),
-                            Text(
-                              location,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textDark.withOpacity(0.55),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.textDark.withOpacity(0.08),
+                          shape: BoxShape.circle,
                         ),
-                      ],
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 22,
+                          color: AppColors.textDark.withOpacity(0.6),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      "LKR ${hourlyRate.toStringAsFixed(0)}/hr",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.darkGreen,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: AppColors.textDark.withOpacity(0.4)),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
