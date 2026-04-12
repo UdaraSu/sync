@@ -16,6 +16,80 @@ body {
   min-height: 100vh;
 }
 
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 8px;
+  border-bottom: 1px solid #334155;
+}
+
+.sidebar-logo {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.sidebar-sub {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-link {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.sidebar-link.active {
+  background: #334155;
+  border-color: #475569;
+  color: #fff;
+}
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+  background: #f8fafc;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -59,23 +133,24 @@ body {
   margin-top: 4px;
 }
 
-.tabs {
+.view-toggle {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 14px;
 }
 
-.tabs button,
-.panel-head button {
+.view-toggle button {
   border: 1px solid #cbd5e1;
   background: #fff;
   color: #1e293b;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   cursor: pointer;
+  font-size: 0.95rem;
 }
 
-.tabs button.active {
+.view-toggle button.active {
   background: #0f172a;
   border-color: #0f172a;
   color: #fff;
@@ -139,6 +214,36 @@ th {
 }
 
 @media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .sidebar-brand {
+    border-bottom: none;
+    padding: 0 8px 0 0;
+    flex: 1 1 auto;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+
+  .sidebar-link {
+    flex: 1;
+    text-align: center;
+  }
+
   .container {
     padding: 16px;
   }

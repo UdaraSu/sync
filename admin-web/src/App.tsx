@@ -154,123 +154,146 @@ export default function App() {
   }, [tab]);
 
   return (
-    <main className="container">
-      <header className="header">
-        <div>
-          <h1>YieldSync Admin</h1>
-          <p>Review user-submitted labour and equipment ads.</p>
+    <div className="app-shell">
+      <aside className="sidebar" aria-label="Main navigation">
+        <div className="sidebar-brand">
+          <span className="sidebar-logo">YieldSync</span>
+          <span className="sidebar-sub">Admin</span>
         </div>
-        <div className="stats">
-          <span>Total loaded ads</span>
-          <strong>{totalAds}</strong>
-        </div>
-      </header>
-
-      <section className="tabs">
-        <button
-          type="button"
-          className={tab === "labour" ? "active" : ""}
-          onClick={() => setTab("labour")}
-        >
-          Labour Ads
-        </button>
-        <button
-          type="button"
-          className={tab === "equipment" ? "active" : ""}
-          onClick={() => setTab("equipment")}
-        >
-          Equipment Ads
-        </button>
-      </section>
-
-      <section className="panel">
-        <div className="panel-head">
-          <h2>{title}</h2>
+        <nav className="sidebar-nav">
           <button
             type="button"
-            onClick={() => setTab((current) => (current === "labour" ? "equipment" : "labour"))}
+            className={`sidebar-link${tab === "labour" ? " active" : ""}`}
+            onClick={() => setTab("labour")}
+            aria-current={tab === "labour" ? "page" : undefined}
           >
-            Switch
+            Labour Ads
           </button>
-        </div>
+          <button
+            type="button"
+            className={`sidebar-link${tab === "equipment" ? " active" : ""}`}
+            onClick={() => setTab("equipment")}
+            aria-current={tab === "equipment" ? "page" : undefined}
+          >
+            Equipment Ads
+          </button>
+        </nav>
+      </aside>
 
-        {loading && <p className="status">Loading {title.toLowerCase()}...</p>}
-        {error && <p className="status error">{error}</p>}
+      <main className="main-area">
+        <div className="container">
+          <header className="header">
+            <div>
+              <h1>{title}</h1>
+              <p>Review user-submitted labour and equipment ads.</p>
+            </div>
+            <div className="stats">
+              <span>Total loaded ads</span>
+              <strong>{totalAds}</strong>
+            </div>
+          </header>
 
-        {!loading && !error && tab === "labour" && (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Location</th>
-                  <th>Rate</th>
-                  <th>Rating</th>
-                  <th>Jobs</th>
-                  <th>Experience</th>
-                  <th>Availability</th>
-                </tr>
-              </thead>
-              <tbody>
-                {labourAds.map((ad) => (
-                  <tr key={ad.id}>
-                    <td>{ad.name || "-"}</td>
-                    <td>{ad.labour_type || "-"}</td>
-                    <td>{ad.location || "-"}</td>
-                    <td>{money(ad.hourly_rate)}/hr</td>
-                    <td>{ad.rating?.toFixed(1) ?? "0.0"}</td>
-                    <td>{ad.jobs_completed ?? 0}</td>
-                    <td>{ad.experience_years ?? 0} yrs</td>
-                    <td>
-                      {ad.available_day || "-"} | {ad.available_time || "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!labourAds.length && <p className="empty">No labour ads found.</p>}
-          </div>
-        )}
+          <section className="view-toggle" aria-label="Switch ad type">
+            <button
+              type="button"
+              className={tab === "labour" ? "active" : ""}
+              onClick={() => setTab("labour")}
+            >
+              Labour Ads
+            </button>
+            <button
+              type="button"
+              className={tab === "equipment" ? "active" : ""}
+              onClick={() => setTab("equipment")}
+            >
+              Equipment Ads
+            </button>
+          </section>
 
-        {!loading && !error && tab === "equipment" && (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Crop</th>
-                  <th>Location</th>
-                  <th>Hourly</th>
-                  <th>Daily</th>
-                  <th>Rating</th>
-                  <th>Bookings</th>
-                  <th>Owner</th>
-                  <th>Condition</th>
-                </tr>
-              </thead>
-              <tbody>
-                {equipmentAds.map((ad) => (
-                  <tr key={ad.id}>
-                    <td>{ad.equipment_type || "-"}</td>
-                    <td>{ad.for_crop || "-"}</td>
-                    <td>{ad.location || "-"}</td>
-                    <td>{money(ad.hourly_rate)}</td>
-                    <td>{money(ad.daily_rate)}</td>
-                    <td>{ad.rating?.toFixed(1) ?? "0.0"}</td>
-                    <td>{ad.past_bookings ?? 0}</td>
-                    <td>{ad.owner_name || "-"}</td>
-                    <td>{ad.condition || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!equipmentAds.length && (
-              <p className="empty">No equipment ads found.</p>
+          <section className="panel">
+            <div className="panel-head">
+              <h2>{title}</h2>
+            </div>
+
+            {loading && <p className="status">Loading {title.toLowerCase()}...</p>}
+            {error && <p className="status error">{error}</p>}
+
+            {!loading && !error && tab === "labour" && (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Location</th>
+                      <th>Rate</th>
+                      <th>Rating</th>
+                      <th>Jobs</th>
+                      <th>Experience</th>
+                      <th>Availability</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {labourAds.map((ad) => (
+                      <tr key={ad.id}>
+                        <td>{ad.name || "-"}</td>
+                        <td>{ad.labour_type || "-"}</td>
+                        <td>{ad.location || "-"}</td>
+                        <td>{money(ad.hourly_rate)}/hr</td>
+                        <td>{ad.rating?.toFixed(1) ?? "0.0"}</td>
+                        <td>{ad.jobs_completed ?? 0}</td>
+                        <td>{ad.experience_years ?? 0} yrs</td>
+                        <td>
+                          {ad.available_day || "-"} | {ad.available_time || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!labourAds.length && <p className="empty">No labour ads found.</p>}
+              </div>
             )}
-          </div>
-        )}
-      </section>
-    </main>
+
+            {!loading && !error && tab === "equipment" && (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Crop</th>
+                      <th>Location</th>
+                      <th>Hourly</th>
+                      <th>Daily</th>
+                      <th>Rating</th>
+                      <th>Bookings</th>
+                      <th>Owner</th>
+                      <th>Condition</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {equipmentAds.map((ad) => (
+                      <tr key={ad.id}>
+                        <td>{ad.equipment_type || "-"}</td>
+                        <td>{ad.for_crop || "-"}</td>
+                        <td>{ad.location || "-"}</td>
+                        <td>{money(ad.hourly_rate)}</td>
+                        <td>{money(ad.daily_rate)}</td>
+                        <td>{ad.rating?.toFixed(1) ?? "0.0"}</td>
+                        <td>{ad.past_bookings ?? 0}</td>
+                        <td>{ad.owner_name || "-"}</td>
+                        <td>{ad.condition || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!equipmentAds.length && (
+                  <p className="empty">No equipment ads found.</p>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
