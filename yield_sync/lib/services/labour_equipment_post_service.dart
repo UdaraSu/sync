@@ -1,11 +1,37 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// Matches Firestore `moderation_status` (see admin approval flow).
+enum PostModerationState {
+  pending,
+  approved,
+  rejected,
+}
+
 /// Service for logged-in users to add a labour post or equipment post.
 /// New docs appear in lists and in recommendations after next model retrain.
 class LabourEquipmentPostService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  /// Parse moderation from a Firestore document map. Missing field = legacy = approved.
+  static PostModerationState moderationStateFromData(Map<String, dynamic>? data) {
+    final raw = (data?['moderation_status'] ?? data?['Moderation_Status'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    switch (raw) {
+      case 'pending':
+        return PostModerationState.pending;
+      case 'rejected':
+        return PostModerationState.rejected;
+      case 'approved':
+      case '':
+        return PostModerationState.approved;
+      default:
+        return PostModerationState.approved;
+    }
+  }
 
   /// Create a new labour post. Returns the new document ID (Labour_ID).
   static Future<String> createLabourPost({
