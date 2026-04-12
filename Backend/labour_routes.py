@@ -90,6 +90,7 @@ def _doc_to_row(doc_id, data):
         "Rating": gn("Rating", "Rating"),
         "Experience_Years": int(gn("Experience_Years", "Experience_Years")),
         "Jobs_Completed": int(gn("Jobs_Completed", "Jobs_Completed")),
+        "Moderation_Status": g("moderation_status", "Moderation_Status", default="approved"),
     }
 
 def _fetch_all_labour_rows_from_firestore():
@@ -116,6 +117,17 @@ def _get_all_labour_rows():
     rows = _fetch_all_labour_rows_from_firestore()
     _labour_cache = {"rows": rows, "ts": now}
     return rows
+
+def labour_row_public_visible(row: dict) -> bool:
+    """Approved listings only; pending/rejected hidden from public search."""
+    s = str(row.get("Moderation_Status", "approved")).strip().lower()
+    return s not in ("pending", "rejected")
+
+
+def _invalidate_labour_cache():
+    global _labour_cache
+    _labour_cache = {"rows": None, "ts": 0}
+
 
 def _norm(s: str) -> str:
     return (s or "").strip().lower()
@@ -187,6 +199,7 @@ def search():
     """
     try:
         rows = _get_all_labour_rows()
+        rows = [r for r in rows if labour_row_public_visible(r)]
     except FileNotFoundError as e:
         logger.warning("Labour search: %s", e)
         return jsonify({
@@ -278,3 +291,65 @@ def search():
         "count": len(items),
         "items": items
     })
+
+
+@labour_bp.get("/pending")
+def list_pending():
+    """Labour ads awaiting admin approval."""
+    try:
+        rows = _fetch_all_labour_rows_from_firestore()
+    except FileNotFoundError as e:
+        logger.warning("Labour pending: %s", e)
+        return jsonify({"error": str(e), "items": []}), 503
+    except Exception as e:
+        logger.exception("Labour pending failed")
+        return jsonify({"error": str(e)}), 500
+
+    pending = [
+        r for r in rows
+        if str(r.get("Moderation_Status", "")).strip().lower() == "pending"
+    ]
+
+    items = []
+    for r in pending:
+        items.append({
+            "id": str(r.get("Labour_ID", "")),
+            "name": str(r.get("Name", "")),
+            "location": str(r.get("Location", "")),
+            "labour_type": str(r.get("Labour_Type", "")),
+            "skill_level": str(r.get("Skill_Level", "")),
+            "hourly_rate": float(r.get("Hourly_Rate", 0) or 0),
+            "rating": float(r.get("Rating", 0) or 0),
+            "jobs_completed": int(r.get("Jobs_Completed", 0) or 0),
+            "experience_years": int(r.get("Experience_Years", 0) or 0),
+            "season": str(r.get("Season", "")),
+            "crop_type": str(r.get("Crop_Type", "")),
+            "available_day": str(r.get("Available_Day", "")),
+            "available_time": str(r.get("Available_Time", "")),
+            "moderation_status": "pending",
+        })
+
+    return jsonify({"count": len(items), "items": items})
+
+
+@labour_bp.post("/<doc_id>/moderate")
+def moderate(doc_id: str):
+    """Set moderation_status to approved or rejected (doc id = Firestore document id)."""
+    data = request.get_json(silent=True) or {}
+    action = (data.get("action") or "").strip().lower()
+    if action not in ("approve", "reject"):
+        return jsonify({"error": 'action must be "approve" or "reject"'}), 400
+
+    try:
+        db = _get_db()
+        ref = db.collection(LABOUR_COLLECTION).document(doc_id)
+        snap = ref.get()
+        if not snap.exists:
+            return jsonify({"error": "not_found"}), 404
+        new_status = "approved" if action == "approve" else "rejected"
+        ref.update({"moderation_status": new_status})
+        _invalidate_labour_cache()
+        return jsonify({"ok": True, "id": doc_id, "moderation_status": new_status})
+    except Exception as e:
+        logger.exception("Labour moderate failed")
+        return jsonify({"error": str(e)}), 500

@@ -54,6 +54,7 @@ class LabourEquipmentPostService {
       'createdByUid': user.uid,
       'ownerPhone': phone,
       'ownerEmail': email,
+      'moderation_status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -113,6 +114,7 @@ class LabourEquipmentPostService {
       'Past_Bookings': pastBookings,
       'Success_Rate_pct': successRatePct,
       'createdByUid': user.uid,
+      'moderation_status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
 

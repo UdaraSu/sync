@@ -213,6 +213,70 @@ th {
   color: #64748b;
 }
 
+.pending-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.pending-heading {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pending-block .table-wrap {
+  margin-top: 0;
+}
+
+.th-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-approve,
+.btn-reject {
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-approve {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.btn-approve:hover:not(:disabled) {
+  background: #d1fae5;
+}
+
+.btn-reject {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.btn-approve:disabled,
+.btn-reject:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .app-shell {
     flex-direction: column;

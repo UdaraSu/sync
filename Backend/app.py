@@ -77,16 +77,30 @@ def root():
                 "/api/equipment/health",
                 "/api/equipment/locations",
                 "/api/equipment/types",
-                "/api/equipment/search"
+                "/api/equipment/search",
+                "/api/equipment/pending",
+                "POST /api/equipment/<id>/moderate"
             ],
             "labour": [
                 "/api/labour/health",
                 "/api/labour/locations",
                 "/api/labour/skills",
-                "/api/labour/search"
+                "/api/labour/search",
+                "/api/labour/pending",
+                "POST /api/labour/<id>/moderate"
             ],
         }
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT, debug=False)
+    _rules = {str(r) for r in app.url_map.iter_rules()}
+    _lp = "/api/labour/pending" in _rules
+    _ep = "/api/equipment/pending" in _rules
+    print(
+        f"[YieldSync] moderation API: "
+        f"/api/labour/pending={'ok' if _lp else 'MISSING — restart after code updates'}, "
+        f"/api/equipment/pending={'ok' if _ep else 'MISSING'}"
+    )
+    # Heavy ML imports make auto-reload expensive; opt in with FLASK_RELOAD=1
+    _reload = os.environ.get("FLASK_RELOAD", "").strip() in ("1", "true", "yes")
+    app.run(host="0.0.0.0", port=PORT, debug=False, use_reloader=_reload)

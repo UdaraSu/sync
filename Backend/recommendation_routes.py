@@ -193,7 +193,7 @@ def recommend():
         # Merge in labours from Firestore that are not in the trained model
         # (e.g. newly added via the app) so they still appear in Smart search
         try:
-            from labour_routes import _get_all_labour_rows
+            from labour_routes import _get_all_labour_rows, labour_row_public_visible
             firestore_labour = _get_all_labour_rows()
             model_ids = {r["Labour_ID"] for r in labour_results}
             labour_cols = [
@@ -201,6 +201,8 @@ def recommend():
                 "Season", "Crop_Type", "Hourly_Rate", "Rating"
             ]
             for row in firestore_labour:
+                if not labour_row_public_visible(row):
+                    continue
                 lid = row.get("Labour_ID") or ""
                 if lid and lid not in model_ids:
                     rec = {c: row.get(c, "" if c not in ("Hourly_Rate", "Rating") else 0) for c in labour_cols}
@@ -221,7 +223,7 @@ def recommend():
 
         # Merge in equipments from Firestore not in the trained model
         try:
-            from equipment_routes import _get_all_equipment_rows
+            from equipment_routes import _get_all_equipment_rows, equipment_row_public_visible
             firestore_equip = _get_all_equipment_rows()
             model_equip_ids = {r["Equipment_ID"] for r in equip_results}
             equip_cols = [
@@ -230,6 +232,8 @@ def recommend():
                 "Hourly_Rate_LKR", "Rating"
             ]
             for row in firestore_equip:
+                if not equipment_row_public_visible(row):
+                    continue
                 eid = row.get("Equipment_ID") or ""
                 if eid and eid not in model_equip_ids:
                     rec = {c: row.get(c, "" if c not in ("Rating", "Hourly_Rate_LKR") else 0) for c in equip_cols}

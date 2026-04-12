@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-type Tab = "labour" | "equipment";
+type Tab = "labour" | "equipment" | "pending";
 
 type LabourAd = {
   id: string;
@@ -110,6 +110,50 @@ async function fetchEquipmentAds(): Promise<EquipmentAd[]> {
   return data.items ?? [];
 }
 
+async function fetchPendingLabour(): Promise<LabourAd[]> {
+  const data = await fetchJsonWithTimeout<{ items?: LabourAd[] }>(
+    `${API_BASE_URL}/labour/pending`,
+    { method: "GET" }
+  );
+  return data.items ?? [];
+}
+
+async function fetchPendingEquipment(): Promise<EquipmentAd[]> {
+  const data = await fetchJsonWithTimeout<{ items?: EquipmentAd[] }>(
+    `${API_BASE_URL}/equipment/pending`,
+    { method: "GET" }
+  );
+  return data.items ?? [];
+}
+
+async function moderateLabour(
+  id: string,
+  action: "approve" | "reject"
+): Promise<void> {
+  await fetchJsonWithTimeout<{ ok?: boolean }>(
+    `${API_BASE_URL}/labour/${encodeURIComponent(id)}/moderate`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }
+  );
+}
+
+async function moderateEquipment(
+  id: string,
+  action: "approve" | "reject"
+): Promise<void> {
+  await fetchJsonWithTimeout<{ ok?: boolean }>(
+    `${API_BASE_URL}/equipment/${encodeURIComponent(id)}/moderate`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }
+  );
+}
+
 function money(value: number): string {
   return new Intl.NumberFormat("en-LK", {
     style: "currency",
@@ -124,11 +168,30 @@ export default function App() {
   const [error, setError] = useState("");
   const [labourAds, setLabourAds] = useState<LabourAd[]>([]);
   const [equipmentAds, setEquipmentAds] = useState<EquipmentAd[]>([]);
+  const [pendingLabour, setPendingLabour] = useState<LabourAd[]>([]);
+  const [pendingEquipment, setPendingEquipment] = useState<EquipmentAd[]>([]);
+  const [actingKey, setActingKey] = useState("");
 
-  const totalAds = labourAds.length + equipmentAds.length;
+  const statLabel =
+    tab === "pending" ? "Awaiting review" : "Listings on this page";
+  const statValue =
+    tab === "pending"
+      ? pendingLabour.length + pendingEquipment.length
+      : tab === "labour"
+        ? labourAds.length
+        : equipmentAds.length;
 
-  const title = useMemo(
-    () => (tab === "labour" ? "Labour Ads" : "Equipment Ads"),
+  const title = useMemo(() => {
+    if (tab === "labour") return "Labour Ads";
+    if (tab === "equipment") return "Equipment Ads";
+    return "Pending approval";
+  }, [tab]);
+
+  const subtitle = useMemo(
+    () =>
+      tab === "pending"
+        ? "Newly posted ads are hidden from search until you approve them."
+        : "Review approved labour and equipment listings (public search).",
     [tab]
   );
 
@@ -141,7 +204,16 @@ export default function App() {
           setLabourAds(await fetchLabourAds());
           return;
         }
-        setEquipmentAds(await fetchEquipmentAds());
+        if (tab === "equipment") {
+          setEquipmentAds(await fetchEquipmentAds());
+          return;
+        }
+        const [l, e] = await Promise.all([
+          fetchPendingLabour(),
+          fetchPendingEquipment(),
+        ]);
+        setPendingLabour(l);
+        setPendingEquipment(e);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to load ads";
         setError(msg);
@@ -152,6 +224,31 @@ export default function App() {
 
     void load();
   }, [tab]);
+
+  async function handleModerate(
+    kind: "labour" | "equipment",
+    id: string,
+    action: "approve" | "reject"
+  ) {
+    const key = `${kind}:${id}:${action}`;
+    setActingKey(key);
+    setError("");
+    try {
+      if (kind === "labour") {
+        await moderateLabour(id, action);
+        setPendingLabour((rows) => rows.filter((r) => r.id !== id));
+      } else {
+        await moderateEquipment(id, action);
+        setPendingEquipment((rows) => rows.filter((r) => r.id !== id));
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Could not update moderation";
+      setError(msg);
+    } finally {
+      setActingKey("");
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -177,6 +274,14 @@ export default function App() {
           >
             Equipment Ads
           </button>
+          <button
+            type="button"
+            className={`sidebar-link${tab === "pending" ? " active" : ""}`}
+            onClick={() => setTab("pending")}
+            aria-current={tab === "pending" ? "page" : undefined}
+          >
+            Pending
+          </button>
         </nav>
       </aside>
 
@@ -185,11 +290,11 @@ export default function App() {
           <header className="header">
             <div>
               <h1>{title}</h1>
-              <p>Review user-submitted labour and equipment ads.</p>
+              <p>{subtitle}</p>
             </div>
             <div className="stats">
-              <span>Total loaded ads</span>
-              <strong>{totalAds}</strong>
+              <span>{statLabel}</span>
+              <strong>{statValue}</strong>
             </div>
           </header>
 
@@ -208,6 +313,13 @@ export default function App() {
             >
               Equipment Ads
             </button>
+            <button
+              type="button"
+              className={tab === "pending" ? "active" : ""}
+              onClick={() => setTab("pending")}
+            >
+              Pending
+            </button>
           </section>
 
           <section className="panel">
@@ -215,7 +327,13 @@ export default function App() {
               <h2>{title}</h2>
             </div>
 
-            {loading && <p className="status">Loading {title.toLowerCase()}...</p>}
+            {loading && (
+              <p className="status">
+                {tab === "pending"
+                  ? "Loading pending ads…"
+                  : `Loading ${title.toLowerCase()}…`}
+              </p>
+            )}
             {error && <p className="status error">{error}</p>}
 
             {!loading && !error && tab === "labour" && (
@@ -289,6 +407,161 @@ export default function App() {
                 {!equipmentAds.length && (
                   <p className="empty">No equipment ads found.</p>
                 )}
+              </div>
+            )}
+
+            {!loading && !error && tab === "pending" && (
+              <div className="pending-sections">
+                <div className="pending-block">
+                  <h3 className="pending-heading">Labour — pending</h3>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Type</th>
+                          <th>Location</th>
+                          <th>Rate</th>
+                          <th>Rating</th>
+                          <th>Availability</th>
+                          <th className="th-actions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingLabour.map((ad) => (
+                          <tr key={ad.id}>
+                            <td>{ad.name || "-"}</td>
+                            <td>{ad.labour_type || "-"}</td>
+                            <td>{ad.location || "-"}</td>
+                            <td>{money(ad.hourly_rate)}/hr</td>
+                            <td>{ad.rating?.toFixed(1) ?? "0.0"}</td>
+                            <td>
+                              {ad.available_day || "-"} |{" "}
+                              {ad.available_time || "-"}
+                            </td>
+                            <td>
+                              <div className="action-cell">
+                                <button
+                                  type="button"
+                                  className="btn-approve"
+                                  disabled={
+                                    !!actingKey &&
+                                    actingKey.startsWith(`labour:${ad.id}:`)
+                                  }
+                                  onClick={() =>
+                                    void handleModerate(
+                                      "labour",
+                                      ad.id,
+                                      "approve"
+                                    )
+                                  }
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-reject"
+                                  disabled={
+                                    !!actingKey &&
+                                    actingKey.startsWith(`labour:${ad.id}:`)
+                                  }
+                                  onClick={() =>
+                                    void handleModerate(
+                                      "labour",
+                                      ad.id,
+                                      "reject"
+                                    )
+                                  }
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {!pendingLabour.length && (
+                      <p className="empty">No labour ads awaiting review.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pending-block">
+                  <h3 className="pending-heading">Equipment — pending</h3>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Type</th>
+                          <th>Crop</th>
+                          <th>Location</th>
+                          <th>Hourly</th>
+                          <th>Daily</th>
+                          <th>Owner</th>
+                          <th>Condition</th>
+                          <th className="th-actions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingEquipment.map((ad) => (
+                          <tr key={ad.id}>
+                            <td>{ad.equipment_type || "-"}</td>
+                            <td>{ad.for_crop || "-"}</td>
+                            <td>{ad.location || "-"}</td>
+                            <td>{money(ad.hourly_rate)}</td>
+                            <td>{money(ad.daily_rate)}</td>
+                            <td>{ad.owner_name || "-"}</td>
+                            <td>{ad.condition || "-"}</td>
+                            <td>
+                              <div className="action-cell">
+                                <button
+                                  type="button"
+                                  className="btn-approve"
+                                  disabled={
+                                    !!actingKey &&
+                                    actingKey.startsWith(`equipment:${ad.id}:`)
+                                  }
+                                  onClick={() =>
+                                    void handleModerate(
+                                      "equipment",
+                                      ad.id,
+                                      "approve"
+                                    )
+                                  }
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-reject"
+                                  disabled={
+                                    !!actingKey &&
+                                    actingKey.startsWith(`equipment:${ad.id}:`)
+                                  }
+                                  onClick={() =>
+                                    void handleModerate(
+                                      "equipment",
+                                      ad.id,
+                                      "reject"
+                                    )
+                                  }
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {!pendingEquipment.length && (
+                      <p className="empty">
+                        No equipment ads awaiting review.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </section>

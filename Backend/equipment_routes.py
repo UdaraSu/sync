@@ -141,6 +141,7 @@ def _doc_to_row(doc_id, data):
         "Avg_Usage_Hours_Per_Month": gn("Avg_Usage_Hours_Per_Month", "Avg_Usage_Hours_Per_Month"),
         "Downtime_Days_Per_Month": gn("Downtime_Days_Per_Month", "Downtime_Days_Per_Month"),
         "Owner_Experience_Years": int(gn("Owner_Experience_Years", "Owner_Experience_Years")),
+        "Moderation_Status": g("moderation_status", "Moderation_Status", default="approved"),
     }
 
 def _fetch_all_equipment_rows_from_firestore():
@@ -166,6 +167,17 @@ def _get_all_equipment_rows():
     rows = _fetch_all_equipment_rows_from_firestore()
     _equipment_cache = {"rows": rows, "ts": now}
     return rows
+
+def equipment_row_public_visible(row: dict) -> bool:
+    """Approved listings only; pending/rejected hidden from public search."""
+    s = str(row.get("Moderation_Status", "approved")).strip().lower()
+    return s not in ("pending", "rejected")
+
+
+def _invalidate_equipment_cache():
+    global _equipment_cache
+    _equipment_cache = {"rows": None, "ts": 0}
+
 
 def _norm(s: str) -> str:
     return (s or "").strip().lower()
@@ -282,6 +294,7 @@ def search():
     """
     try:
         rows = _get_all_equipment_rows()
+        rows = [r for r in rows if equipment_row_public_visible(r)]
     except FileNotFoundError as e:
         logger.warning("Equipment search: %s", e)
         return jsonify({"error": str(e), "count": 0, "items": []}), 503
@@ -349,3 +362,65 @@ def search():
         })
 
     return jsonify({"count": len(items), "items": items})
+
+
+@equipment_bp.get("/pending")
+def list_pending():
+    """Equipment ads awaiting admin approval."""
+    try:
+        rows = _fetch_all_equipment_rows_from_firestore()
+    except FileNotFoundError as e:
+        logger.warning("Equipment pending: %s", e)
+        return jsonify({"error": str(e), "items": []}), 503
+    except Exception as e:
+        logger.exception("Equipment pending failed")
+        return jsonify({"error": str(e)}), 500
+
+    pending = [
+        r for r in rows
+        if str(r.get("Moderation_Status", "")).strip().lower() == "pending"
+    ]
+
+    items = []
+    for r in pending:
+        items.append({
+            "id": _safe_str(r.get("Equipment_ID")),
+            "equipment_type": _safe_str(r.get("Equipment_Type")),
+            "for_crop": _safe_str(r.get("For_Crop")),
+            "location": _safe_str(r.get("Main_District")),
+            "nearest_major_district": _safe_str(r.get("Nearest_Major_District")),
+            "hourly_rate": float(r.get("Hourly_Rate_LKR", 0) or 0),
+            "daily_rate": float(r.get("Daily_Rate_LKR", 0) or 0),
+            "rating": float(r.get("Rating", 0) or 0),
+            "past_bookings": int(r.get("Past_Bookings", 0) or 0),
+            "owner_name": _safe_str(r.get("Equipment_Owner_Name")) or "—",
+            "available_day": _safe_str(r.get("Available_Day")),
+            "available_time": _safe_str(r.get("Available_Time")),
+            "condition": _safe_str(r.get("Condition")),
+            "moderation_status": "pending",
+        })
+
+    return jsonify({"count": len(items), "items": items})
+
+
+@equipment_bp.post("/<doc_id>/moderate")
+def moderate(doc_id: str):
+    """Set moderation_status to approved or rejected (doc id = Firestore document id)."""
+    data = request.get_json(silent=True) or {}
+    action = (data.get("action") or "").strip().lower()
+    if action not in ("approve", "reject"):
+        return jsonify({"error": 'action must be "approve" or "reject"'}), 400
+
+    try:
+        db = _get_db()
+        ref = db.collection(EQUIPMENT_COLLECTION).document(doc_id)
+        snap = ref.get()
+        if not snap.exists:
+            return jsonify({"error": "not_found"}), 404
+        new_status = "approved" if action == "approve" else "rejected"
+        ref.update({"moderation_status": new_status})
+        _invalidate_equipment_cache()
+        return jsonify({"ok": True, "id": doc_id, "moderation_status": new_status})
+    except Exception as e:
+        logger.exception("Equipment moderate failed")
+        return jsonify({"error": str(e)}), 500
