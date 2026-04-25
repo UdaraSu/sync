@@ -14,6 +14,8 @@ type LabourAd = {
   experience_years: number;
   available_day: string;
   available_time: string;
+  season?: string;
+  crop_type?: string;
 };
 
 type EquipmentAd = {
@@ -29,6 +31,7 @@ type EquipmentAd = {
   available_day: string;
   available_time: string;
   condition: string;
+  nearest_major_district?: string;
 };
 
 /** Dev: use Vite proxy `/api` → backend. Prod: set VITE_API_BASE_URL or default localhost. */
@@ -162,6 +165,62 @@ function money(value: number): string {
   }).format(value || 0);
 }
 
+function normalizeQuery(q: string): string {
+  return q.trim().toLowerCase();
+}
+
+function labourHaystack(ad: LabourAd): string {
+  return [
+    ad.id,
+    ad.name,
+    ad.location,
+    ad.labour_type,
+    ad.skill_level,
+    ad.season ?? "",
+    ad.crop_type ?? "",
+    String(ad.hourly_rate ?? ""),
+    String(ad.rating ?? ""),
+    String(ad.jobs_completed ?? ""),
+    String(ad.experience_years ?? ""),
+    ad.available_day,
+    ad.available_time,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function equipmentHaystack(ad: EquipmentAd): string {
+  return [
+    ad.id,
+    ad.equipment_type,
+    ad.for_crop,
+    ad.location,
+    ad.nearest_major_district ?? "",
+    ad.owner_name,
+    ad.condition,
+    String(ad.hourly_rate ?? ""),
+    String(ad.daily_rate ?? ""),
+    String(ad.rating ?? ""),
+    String(ad.past_bookings ?? ""),
+    ad.available_day,
+    ad.available_time,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterLabour(ads: LabourAd[], query: string): LabourAd[] {
+  const n = normalizeQuery(query);
+  if (!n) return ads;
+  return ads.filter((ad) => labourHaystack(ad).includes(n));
+}
+
+function filterEquipment(ads: EquipmentAd[], query: string): EquipmentAd[] {
+  const n = normalizeQuery(query);
+  if (!n) return ads;
+  return ads.filter((ad) => equipmentHaystack(ad).includes(n));
+}
+
 export default function App() {
   const [tab, setTab] = useState<Tab>("labour");
   const [loading, setLoading] = useState(false);
@@ -171,15 +230,49 @@ export default function App() {
   const [pendingLabour, setPendingLabour] = useState<LabourAd[]>([]);
   const [pendingEquipment, setPendingEquipment] = useState<EquipmentAd[]>([]);
   const [actingKey, setActingKey] = useState("");
+  const [searchLabour, setSearchLabour] = useState("");
+  const [searchEquipment, setSearchEquipment] = useState("");
+  const [searchPending, setSearchPending] = useState("");
+
+  const filteredLabourAds = useMemo(
+    () => filterLabour(labourAds, searchLabour),
+    [labourAds, searchLabour]
+  );
+  const filteredEquipmentAds = useMemo(
+    () => filterEquipment(equipmentAds, searchEquipment),
+    [equipmentAds, searchEquipment]
+  );
+  const filteredPendingLabour = useMemo(
+    () => filterLabour(pendingLabour, searchPending),
+    [pendingLabour, searchPending]
+  );
+  const filteredPendingEquipment = useMemo(
+    () => filterEquipment(pendingEquipment, searchPending),
+    [pendingEquipment, searchPending]
+  );
 
   const statLabel =
     tab === "pending" ? "Awaiting review" : "Listings on this page";
-  const statValue =
+  const statTotal =
     tab === "pending"
       ? pendingLabour.length + pendingEquipment.length
       : tab === "labour"
         ? labourAds.length
         : equipmentAds.length;
+
+  const statFiltered =
+    tab === "pending"
+      ? filteredPendingLabour.length + filteredPendingEquipment.length
+      : tab === "labour"
+        ? filteredLabourAds.length
+        : filteredEquipmentAds.length;
+
+  const searchActive =
+    tab === "labour"
+      ? normalizeQuery(searchLabour).length > 0
+      : tab === "equipment"
+        ? normalizeQuery(searchEquipment).length > 0
+        : normalizeQuery(searchPending).length > 0;
 
   const title = useMemo(() => {
     if (tab === "labour") return "Labour Ads";
@@ -293,8 +386,11 @@ export default function App() {
               <p>{subtitle}</p>
             </div>
             <div className="stats">
-              <span>{statLabel}</span>
-              <strong>{statValue}</strong>
+              <span>{searchActive ? "Matching filter" : statLabel}</span>
+              <strong>{searchActive ? statFiltered : statTotal}</strong>
+              {searchActive && (
+                <span className="stats-note">of {statTotal} loaded</span>
+              )}
             </div>
           </header>
 
@@ -327,6 +423,60 @@ export default function App() {
               <h2>{title}</h2>
             </div>
 
+            {!loading && !error && tab === "labour" && (
+              <div className="search-bar">
+                <label className="search-label" htmlFor="admin-search-labour">
+                  Search labour ads
+                </label>
+                <input
+                  id="admin-search-labour"
+                  type="search"
+                  className="search-input"
+                  placeholder="Name, type, location, skill, id…"
+                  value={searchLabour}
+                  onChange={(e) => setSearchLabour(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+            )}
+
+            {!loading && !error && tab === "equipment" && (
+              <div className="search-bar">
+                <label className="search-label" htmlFor="admin-search-equipment">
+                  Search equipment ads
+                </label>
+                <input
+                  id="admin-search-equipment"
+                  type="search"
+                  className="search-input"
+                  placeholder="Type, crop, owner, location, id…"
+                  value={searchEquipment}
+                  onChange={(e) => setSearchEquipment(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+            )}
+
+            {!loading && !error && tab === "pending" && (
+              <div className="search-bar">
+                <label className="search-label" htmlFor="admin-search-pending">
+                  Search pending ads
+                </label>
+                <input
+                  id="admin-search-pending"
+                  type="search"
+                  className="search-input"
+                  placeholder="Filters both labour and equipment pending lists…"
+                  value={searchPending}
+                  onChange={(e) => setSearchPending(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+            )}
+
             {loading && (
               <p className="status">
                 {tab === "pending"
@@ -352,7 +502,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {labourAds.map((ad) => (
+                    {filteredLabourAds.map((ad) => (
                       <tr key={ad.id}>
                         <td>{ad.name || "-"}</td>
                         <td>{ad.labour_type || "-"}</td>
@@ -368,7 +518,12 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
-                {!labourAds.length && <p className="empty">No labour ads found.</p>}
+                {!labourAds.length && (
+                  <p className="empty">No labour ads found.</p>
+                )}
+                {!!labourAds.length && !filteredLabourAds.length && (
+                  <p className="empty">No rows match your search.</p>
+                )}
               </div>
             )}
 
@@ -389,7 +544,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {equipmentAds.map((ad) => (
+                    {filteredEquipmentAds.map((ad) => (
                       <tr key={ad.id}>
                         <td>{ad.equipment_type || "-"}</td>
                         <td>{ad.for_crop || "-"}</td>
@@ -406,6 +561,9 @@ export default function App() {
                 </table>
                 {!equipmentAds.length && (
                   <p className="empty">No equipment ads found.</p>
+                )}
+                {!!equipmentAds.length && !filteredEquipmentAds.length && (
+                  <p className="empty">No rows match your search.</p>
                 )}
               </div>
             )}
@@ -428,7 +586,7 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {pendingLabour.map((ad) => (
+                        {filteredPendingLabour.map((ad) => (
                           <tr key={ad.id}>
                             <td>{ad.name || "-"}</td>
                             <td>{ad.labour_type || "-"}</td>
@@ -484,6 +642,9 @@ export default function App() {
                     {!pendingLabour.length && (
                       <p className="empty">No labour ads awaiting review.</p>
                     )}
+                    {!!pendingLabour.length && !filteredPendingLabour.length && (
+                      <p className="empty">No labour rows match your search.</p>
+                    )}
                   </div>
                 </div>
 
@@ -504,7 +665,7 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {pendingEquipment.map((ad) => (
+                        {filteredPendingEquipment.map((ad) => (
                           <tr key={ad.id}>
                             <td>{ad.equipment_type || "-"}</td>
                             <td>{ad.for_crop || "-"}</td>
@@ -558,6 +719,11 @@ export default function App() {
                     {!pendingEquipment.length && (
                       <p className="empty">
                         No equipment ads awaiting review.
+                      </p>
+                    )}
+                    {!!pendingEquipment.length && !filteredPendingEquipment.length && (
+                      <p className="empty">
+                        No equipment rows match your search.
                       </p>
                     )}
                   </div>
