@@ -23,6 +23,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _emailCtrl.text = 'saman@gmail.com';
+    _passCtrl.text = 'saman12@';
+  }
+
+  @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();

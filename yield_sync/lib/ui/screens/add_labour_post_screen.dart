@@ -15,28 +15,76 @@ class AddLabourPostScreen extends StatefulWidget {
 class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  final _labourTypeCtrl = TextEditingController();
-  final _skillLevelCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
-  final _seasonCtrl = TextEditingController();
-  final _cropTypeCtrl = TextEditingController();
-  final _availableDayCtrl = TextEditingController();
-  final _availableTimeCtrl = TextEditingController();
   final _hourlyRateCtrl = TextEditingController();
   final _experienceYearsCtrl = TextEditingController();
 
   bool _saving = false;
+  String? _selectedLabourType;
+  String? _selectedSkillLevel;
+  String? _selectedDistrict;
+  String? _selectedSeason;
+  String? _selectedCropType;
+  String? _selectedAvailability;
+  TimeOfDay? _availableFrom;
+  TimeOfDay? _availableTo;
+
+  static const List<String> _labourTypes = [
+    'Field Worker',
+    'Rice Planting',
+    'Rice Harvesting',
+    'Irrigation',
+    'Spraying',
+    'Weeding',
+    'Machine Operator',
+  ];
+
+  static const List<String> _skillLevels = [
+    'Beginner',
+    'Experienced',
+  ];
+
+  static const List<String> _districts = [
+    'Alawwa',
+    'Bingiriya',
+    'Galgamuwa',
+    'Giriulla',
+    'Hettipola',
+    'Hiriyala',
+    'Ibbagamuwa',
+    'Kuliyapitiya',
+    'Kurunegala',
+    'Maho',
+    'Maspotha',
+    'Mawathagama',
+    'Narammala',
+    'Nikaweratiya',
+    'Pannala',
+    'Polgahawela',
+    'Rideegama',
+    'Wariyapola',
+    'Weerambugedara',
+  ];
+
+  static const List<String> _seasons = ['Yala', 'Maha'];
+
+  static const List<String> _cropTypes = [
+    'Paddy',
+    'Maize',
+    'Onion',
+    'Chickpea',
+    'Vegetables',
+    'Other',
+  ];
+
+  static const List<String> _availabilityOptions = [
+    'Weekdays',
+    'Weekends',
+    'Both',
+  ];
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _labourTypeCtrl.dispose();
-    _skillLevelCtrl.dispose();
-    _locationCtrl.dispose();
-    _seasonCtrl.dispose();
-    _cropTypeCtrl.dispose();
-    _availableDayCtrl.dispose();
-    _availableTimeCtrl.dispose();
     _hourlyRateCtrl.dispose();
     _experienceYearsCtrl.dispose();
     super.dispose();
@@ -47,8 +95,52 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
     return null;
   }
 
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final suffix = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $suffix';
+  }
+
+  String _formatLocation(String city) {
+    if (city.toLowerCase() == 'kurunegala') return 'Kurunegala';
+    return 'Kurunegala, $city';
+  }
+
+  Future<void> _pickFromTime() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _availableFrom ?? const TimeOfDay(hour: 8, minute: 0),
+    );
+    if (selected == null) return;
+    setState(() => _availableFrom = selected);
+  }
+
+  Future<void> _pickToTime() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _availableTo ?? const TimeOfDay(hour: 17, minute: 0),
+    );
+    if (selected == null) return;
+    setState(() => _availableTo = selected);
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_availableFrom == null || _availableTo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select available time range')),
+      );
+      return;
+    }
+    final fromMinutes = _availableFrom!.hour * 60 + _availableFrom!.minute;
+    final toMinutes = _availableTo!.hour * 60 + _availableTo!.minute;
+    if (toMinutes <= fromMinutes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('"Available to" must be later than "Available from"')),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
     try {
@@ -64,13 +156,13 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
 
       await LabourEquipmentPostService.createLabourPost(
         name: _nameCtrl.text.trim(),
-        labourType: _labourTypeCtrl.text.trim(),
-        skillLevel: _skillLevelCtrl.text.trim(),
-        location: _locationCtrl.text.trim(),
-        season: _seasonCtrl.text.trim(),
-        cropType: _cropTypeCtrl.text.trim(),
-        availableDay: _availableDayCtrl.text.trim(),
-        availableTime: _availableTimeCtrl.text.trim(),
+        labourType: _selectedLabourType!,
+        skillLevel: _selectedSkillLevel!,
+        location: _formatLocation(_selectedDistrict!),
+        season: _selectedSeason!,
+        cropType: _selectedCropType!,
+        availableDay: _selectedAvailability!,
+        availableTime: '${_formatTimeOfDay(_availableFrom!)} - ${_formatTimeOfDay(_availableTo!)}',
         hourlyRate: hourlyRate,
         experienceYears: experienceYears,
       );
@@ -126,53 +218,71 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
                               validator: (v) => _req(v, 'Name required'),
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _labourTypeCtrl,
-                              label: 'Labour type / skill',
-                              hint: 'e.g. Field Worker, Rice Harvesting',
-                              validator: (v) => _req(v, 'Labour type required'),
+                            _dropdownField(
+                              label: 'Labour type',
+                              value: _selectedLabourType,
+                              items: _labourTypes,
+                              onChanged: (value) => setState(() => _selectedLabourType = value),
+                              validatorMessage: 'Labour type required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _skillLevelCtrl,
+                            _dropdownField(
                               label: 'Skill level',
-                              hint: 'e.g. Experienced, Beginner',
+                              value: _selectedSkillLevel,
+                              items: _skillLevels,
+                              onChanged: (value) => setState(() => _selectedSkillLevel = value),
+                              validatorMessage: 'Skill level required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _locationCtrl,
-                              label: 'Location (district / area)',
-                              hint: 'e.g. Kurunegala, Pothuhera',
-                              validator: (v) => _req(v, 'Location required'),
+                            _dropdownField(
+                              label: 'Location (Kurunegala)',
+                              value: _selectedDistrict,
+                              items: _districts,
+                              onChanged: (value) => setState(() => _selectedDistrict = value),
+                              validatorMessage: 'Location required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _seasonCtrl,
+                            _dropdownField(
                               label: 'Season',
-                              hint: 'e.g. Yala, Maha',
+                              value: _selectedSeason,
+                              items: _seasons,
+                              onChanged: (value) => setState(() => _selectedSeason = value),
+                              validatorMessage: 'Season required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _cropTypeCtrl,
+                            _dropdownField(
                               label: 'Crop type',
-                              hint: 'e.g. Paddy, Vegetables',
+                              value: _selectedCropType,
+                              items: _cropTypes,
+                              onChanged: (value) => setState(() => _selectedCropType = value),
+                              validatorMessage: 'Crop type required',
+                            ),
+                            const SizedBox(height: 12),
+                            _dropdownField(
+                              label: 'Available days',
+                              value: _selectedAvailability,
+                              items: _availabilityOptions,
+                              onChanged: (value) => setState(() => _selectedAvailability = value),
+                              validatorMessage: 'Availability required',
                             ),
                             const SizedBox(height: 12),
                             Row(
                               children: [
                                 Expanded(
-                                  child: AppTextField(
-                                    controller: _availableDayCtrl,
-                                    label: 'Available day',
-                                    hint: 'e.g. Weekdays',
+                                  child: _timeField(
+                                    label: 'Available from',
+                                    value: _availableFrom == null
+                                        ? null
+                                        : _formatTimeOfDay(_availableFrom!),
+                                    onTap: _pickFromTime,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: AppTextField(
-                                    controller: _availableTimeCtrl,
-                                    label: 'Available time',
-                                    hint: 'e.g. 8am-5pm',
+                                  child: _timeField(
+                                    label: 'Available to',
+                                    value: _availableTo == null ? null : _formatTimeOfDay(_availableTo!),
+                                    onTap: _pickToTime,
                                   ),
                                 ),
                               ],
@@ -263,6 +373,108 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _dropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required String validatorMessage,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.darkGreen),
+      borderRadius: BorderRadius.circular(14),
+      dropdownColor: Colors.white,
+      style: const TextStyle(
+        color: AppColors.textDark,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: _inputDecoration(label: label),
+      hint: const Text(
+        'Select option',
+        style: TextStyle(
+          color: AppColors.muted,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      items: items
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (v) => v == null || v.isEmpty ? validatorMessage : null,
+    );
+  }
+
+  Widget _timeField({
+    required String label,
+    required String? value,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: _inputDecoration(
+          label: label,
+          suffixIcon: const Icon(Icons.access_time_rounded, color: AppColors.darkGreen),
+        ),
+        child: Text(
+          value ?? 'Select time',
+          style: TextStyle(
+            color: value == null ? AppColors.muted : AppColors.textDark,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    Widget? suffixIcon,
+  }) {
+    const borderRadius = BorderRadius.all(Radius.circular(14));
+    return InputDecoration(
+      labelText: label,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: const Color(0xFFF7FCFA),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      labelStyle: const TextStyle(
+        color: AppColors.muted,
+        fontWeight: FontWeight.w600,
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.primary, width: 1.6),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.error, width: 1.4),
+      ),
     );
   }
 }
