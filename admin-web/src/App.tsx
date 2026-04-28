@@ -16,6 +16,11 @@ type LabourAd = {
   available_time: string;
   season?: string;
   crop_type?: string;
+  price_outlier?: boolean;
+  price_median?: number | null;
+  price_low_threshold?: number | null;
+  price_high_threshold?: number | null;
+  price_outlier_reason?: string;
 };
 
 type EquipmentAd = {
@@ -32,6 +37,16 @@ type EquipmentAd = {
   available_time: string;
   condition: string;
   nearest_major_district?: string;
+  hourly_price_outlier?: boolean;
+  hourly_price_median?: number | null;
+  hourly_price_low_threshold?: number | null;
+  hourly_price_high_threshold?: number | null;
+  hourly_price_outlier_reason?: string;
+  daily_price_outlier?: boolean;
+  daily_price_median?: number | null;
+  daily_price_low_threshold?: number | null;
+  daily_price_high_threshold?: number | null;
+  daily_price_outlier_reason?: string;
 };
 
 /** Dev: use Vite proxy `/api` → backend. Prod: set VITE_API_BASE_URL or default localhost. */
@@ -165,6 +180,14 @@ function money(value: number): string {
   }).format(value || 0);
 }
 
+function isLabourOutlier(ad: LabourAd): boolean {
+  return !!ad.price_outlier;
+}
+
+function isEquipmentOutlier(ad: EquipmentAd): boolean {
+  return !!ad.hourly_price_outlier || !!ad.daily_price_outlier;
+}
+
 function normalizeQuery(q: string): string {
   return q.trim().toLowerCase();
 }
@@ -184,6 +207,8 @@ function labourHaystack(ad: LabourAd): string {
     String(ad.experience_years ?? ""),
     ad.available_day,
     ad.available_time,
+    ad.price_outlier ? "price outlier" : "",
+    ad.price_outlier_reason ?? "",
   ]
     .join(" ")
     .toLowerCase();
@@ -204,6 +229,10 @@ function equipmentHaystack(ad: EquipmentAd): string {
     String(ad.past_bookings ?? ""),
     ad.available_day,
     ad.available_time,
+    ad.hourly_price_outlier ? "hourly outlier" : "",
+    ad.daily_price_outlier ? "daily outlier" : "",
+    ad.hourly_price_outlier_reason ?? "",
+    ad.daily_price_outlier_reason ?? "",
   ]
     .join(" ")
     .toLowerCase();
@@ -233,6 +262,10 @@ export default function App() {
   const [searchLabour, setSearchLabour] = useState("");
   const [searchEquipment, setSearchEquipment] = useState("");
   const [searchPending, setSearchPending] = useState("");
+  const [fraudModal, setFraudModal] = useState<{
+    title: string;
+    reasons: string[];
+  } | null>(null);
 
   const filteredLabourAds = useMemo(
     () => filterLabour(labourAds, searchLabour),
@@ -341,6 +374,28 @@ export default function App() {
     } finally {
       setActingKey("");
     }
+  }
+
+  function openFraudModalForLabour(ad: LabourAd) {
+    const reasons = [ad.price_outlier_reason].filter(
+      (v): v is string => !!v && v.trim().length > 0
+    );
+    if (!reasons.length) return;
+    setFraudModal({
+      title: `Labour fraud warning — ${ad.name || ad.id}`,
+      reasons,
+    });
+  }
+
+  function openFraudModalForEquipment(ad: EquipmentAd) {
+    const reasons = [ad.hourly_price_outlier_reason, ad.daily_price_outlier_reason].filter(
+      (v): v is string => !!v && v.trim().length > 0
+    );
+    if (!reasons.length) return;
+    setFraudModal({
+      title: `Equipment fraud warning — ${ad.equipment_type || ad.id}`,
+      reasons,
+    });
   }
 
   return (
@@ -582,12 +637,17 @@ export default function App() {
                           <th>Rate</th>
                           <th>Rating</th>
                           <th>Availability</th>
+                          <th>Fraud risk</th>
                           <th className="th-actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPendingLabour.map((ad) => (
-                          <tr key={ad.id}>
+                          <tr
+                            key={ad.id}
+                            className={isLabourOutlier(ad) ? "warning-row clickable-row" : ""}
+                            onClick={() => openFraudModalForLabour(ad)}
+                          >
                             <td>{ad.name || "-"}</td>
                             <td>{ad.labour_type || "-"}</td>
                             <td>{ad.location || "-"}</td>
@@ -598,6 +658,16 @@ export default function App() {
                               {ad.available_time || "-"}
                             </td>
                             <td>
+                              <span
+                                className={`risk-badge${isLabourOutlier(ad) ? " high" : " low"}`}
+                              >
+                                {isLabourOutlier(ad) ? "Price outlier" : "Normal"}
+                              </span>
+                              {ad.price_outlier_reason && (
+                                <div className="risk-reason">{ad.price_outlier_reason}</div>
+                              )}
+                            </td>
+                            <td>
                               <div className="action-cell">
                                 <button
                                   type="button"
@@ -606,12 +676,11 @@ export default function App() {
                                     !!actingKey &&
                                     actingKey.startsWith(`labour:${ad.id}:`)
                                   }
-                                  onClick={() =>
-                                    void handleModerate(
-                                      "labour",
-                                      ad.id,
-                                      "approve"
-                                    )
+                                  onClick={(e) =>
+                                    void (async () => {
+                                      e.stopPropagation();
+                                      await handleModerate("labour", ad.id, "approve");
+                                    })()
                                   }
                                 >
                                   Approve
@@ -623,12 +692,11 @@ export default function App() {
                                     !!actingKey &&
                                     actingKey.startsWith(`labour:${ad.id}:`)
                                   }
-                                  onClick={() =>
-                                    void handleModerate(
-                                      "labour",
-                                      ad.id,
-                                      "reject"
-                                    )
+                                  onClick={(e) =>
+                                    void (async () => {
+                                      e.stopPropagation();
+                                      await handleModerate("labour", ad.id, "reject");
+                                    })()
                                   }
                                 >
                                   Reject
@@ -661,12 +729,17 @@ export default function App() {
                           <th>Daily</th>
                           <th>Owner</th>
                           <th>Condition</th>
+                          <th>Fraud risk</th>
                           <th className="th-actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPendingEquipment.map((ad) => (
-                          <tr key={ad.id}>
+                          <tr
+                            key={ad.id}
+                            className={isEquipmentOutlier(ad) ? "warning-row clickable-row" : ""}
+                            onClick={() => openFraudModalForEquipment(ad)}
+                          >
                             <td>{ad.equipment_type || "-"}</td>
                             <td>{ad.for_crop || "-"}</td>
                             <td>{ad.location || "-"}</td>
@@ -674,6 +747,23 @@ export default function App() {
                             <td>{money(ad.daily_rate)}</td>
                             <td>{ad.owner_name || "-"}</td>
                             <td>{ad.condition || "-"}</td>
+                            <td>
+                              <span
+                                className={`risk-badge${isEquipmentOutlier(ad) ? " high" : " low"}`}
+                              >
+                                {isEquipmentOutlier(ad) ? "Price outlier" : "Normal"}
+                              </span>
+                              {ad.hourly_price_outlier_reason && (
+                                <div className="risk-reason">
+                                  H: {ad.hourly_price_outlier_reason}
+                                </div>
+                              )}
+                              {ad.daily_price_outlier_reason && (
+                                <div className="risk-reason">
+                                  D: {ad.daily_price_outlier_reason}
+                                </div>
+                              )}
+                            </td>
                             <td>
                               <div className="action-cell">
                                 <button
@@ -683,12 +773,11 @@ export default function App() {
                                     !!actingKey &&
                                     actingKey.startsWith(`equipment:${ad.id}:`)
                                   }
-                                  onClick={() =>
-                                    void handleModerate(
-                                      "equipment",
-                                      ad.id,
-                                      "approve"
-                                    )
+                                  onClick={(e) =>
+                                    void (async () => {
+                                      e.stopPropagation();
+                                      await handleModerate("equipment", ad.id, "approve");
+                                    })()
                                   }
                                 >
                                   Approve
@@ -700,12 +789,11 @@ export default function App() {
                                     !!actingKey &&
                                     actingKey.startsWith(`equipment:${ad.id}:`)
                                   }
-                                  onClick={() =>
-                                    void handleModerate(
-                                      "equipment",
-                                      ad.id,
-                                      "reject"
-                                    )
+                                  onClick={(e) =>
+                                    void (async () => {
+                                      e.stopPropagation();
+                                      await handleModerate("equipment", ad.id, "reject");
+                                    })()
                                   }
                                 >
                                   Reject
@@ -733,6 +821,28 @@ export default function App() {
           </section>
         </div>
       </main>
+      {fraudModal && (
+        <div className="modal-backdrop" onClick={() => setFraudModal(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3>{fraudModal.title}</h3>
+            <p className="modal-subtitle">Fraud detection reasons</p>
+            <ul className="modal-reason-list">
+              {fraudModal.reasons.map((reason, idx) => (
+                <li key={`${idx}-${reason}`}>{reason}</li>
+              ))}
+            </ul>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-approve"
+                onClick={() => setFraudModal(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import os
 import re
 import time
 import logging
+import statistics
 from flask import Blueprint, request, jsonify
 
 logger = logging.getLogger(__name__)
@@ -186,6 +187,82 @@ def _tokenize(q: str):
     q = _norm(q)
     q = re.sub(r"[^a-z0-9\s]", " ", q)
     return [t for t in q.split() if t]
+
+
+def _positive_rates(values):
+    out = []
+    for v in values:
+        try:
+            fv = float(v)
+            if fv > 0:
+                out.append(fv)
+        except (TypeError, ValueError):
+            pass
+    return out
+
+
+def _equipment_peer_rates(rows, district: str, equipment_type: str, rate_key: str):
+    dist = _norm(district)
+    typ = _norm(equipment_type)
+
+    exact = _positive_rates(
+        r.get(rate_key)
+        for r in rows
+        if _norm(str(r.get("Main_District", ""))) == dist
+        and _norm(str(r.get("Equipment_Type", ""))) == typ
+    )
+    if len(exact) >= 5:
+        return exact
+
+    by_dist = _positive_rates(
+        r.get(rate_key)
+        for r in rows
+        if _norm(str(r.get("Main_District", ""))) == dist
+    )
+    if len(by_dist) >= 5:
+        return by_dist
+
+    by_type = _positive_rates(
+        r.get(rate_key)
+        for r in rows
+        if _norm(str(r.get("Equipment_Type", ""))) == typ
+    )
+    if len(by_type) >= 5:
+        return by_type
+
+    return _positive_rates(r.get(rate_key) for r in rows)
+
+
+def _rate_outlier(value: float, peer_rates: list[float], label: str):
+    if value <= 0 or len(peer_rates) < 3:
+        return {
+            f"{label}_outlier": False,
+            f"{label}_median": None,
+            f"{label}_low_threshold": None,
+            f"{label}_high_threshold": None,
+            f"{label}_outlier_reason": "",
+        }
+
+    median_rate = float(statistics.median(peer_rates))
+    low = round(median_rate * 0.60, 2)
+    high = round(median_rate * 1.80, 2)
+    is_outlier = value < low or value > high
+
+    reason = ""
+    if is_outlier:
+        direction = "below" if value < low else "above"
+        reason = (
+            f"{label.capitalize()} rate is {direction} expected range for similar posts "
+            f"(median={median_rate:.2f}, range={low:.2f}-{high:.2f})."
+        )
+
+    return {
+        f"{label}_outlier": is_outlier,
+        f"{label}_median": round(median_rate, 2),
+        f"{label}_low_threshold": low,
+        f"{label}_high_threshold": high,
+        f"{label}_outlier_reason": reason,
+    }
 
 @equipment_bp.get("/health")
 def health():
@@ -383,14 +460,40 @@ def list_pending():
 
     items = []
     for r in pending:
+        hourly_rate = float(r.get("Hourly_Rate_LKR", 0) or 0)
+        daily_rate = float(r.get("Daily_Rate_LKR", 0) or 0)
+        district = _safe_str(r.get("Main_District"))
+        equipment_type = _safe_str(r.get("Equipment_Type"))
+
+        hourly_fraud = _rate_outlier(
+            value=hourly_rate,
+            peer_rates=_equipment_peer_rates(
+                rows=rows,
+                district=district,
+                equipment_type=equipment_type,
+                rate_key="Hourly_Rate_LKR",
+            ),
+            label="hourly_price",
+        )
+        daily_fraud = _rate_outlier(
+            value=daily_rate,
+            peer_rates=_equipment_peer_rates(
+                rows=rows,
+                district=district,
+                equipment_type=equipment_type,
+                rate_key="Daily_Rate_LKR",
+            ),
+            label="daily_price",
+        )
+
         items.append({
             "id": _safe_str(r.get("Equipment_ID")),
-            "equipment_type": _safe_str(r.get("Equipment_Type")),
+            "equipment_type": equipment_type,
             "for_crop": _safe_str(r.get("For_Crop")),
-            "location": _safe_str(r.get("Main_District")),
+            "location": district,
             "nearest_major_district": _safe_str(r.get("Nearest_Major_District")),
-            "hourly_rate": float(r.get("Hourly_Rate_LKR", 0) or 0),
-            "daily_rate": float(r.get("Daily_Rate_LKR", 0) or 0),
+            "hourly_rate": hourly_rate,
+            "daily_rate": daily_rate,
             "rating": float(r.get("Rating", 0) or 0),
             "past_bookings": int(r.get("Past_Bookings", 0) or 0),
             "owner_name": _safe_str(r.get("Equipment_Owner_Name")) or "—",
@@ -398,6 +501,8 @@ def list_pending():
             "available_time": _safe_str(r.get("Available_Time")),
             "condition": _safe_str(r.get("Condition")),
             "moderation_status": "pending",
+            **hourly_fraud,
+            **daily_fraud,
         })
 
     return jsonify({"count": len(items), "items": items})

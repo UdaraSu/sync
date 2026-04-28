@@ -3,6 +3,7 @@ import os
 import re
 import time
 import logging
+import statistics
 from flask import Blueprint, request, jsonify
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,85 @@ def _tokenize(q: str):
     q = _norm(q)
     q = re.sub(r"[^a-z0-9\s]", " ", q)
     return [t for t in q.split() if t]
+
+
+def _positive_rates(values):
+    out = []
+    for v in values:
+        try:
+            fv = float(v)
+            if fv > 0:
+                out.append(fv)
+        except (TypeError, ValueError):
+            pass
+    return out
+
+
+def _labour_peer_rates(rows, location: str, labour_type: str):
+    loc = _norm(location)
+    typ = _norm(labour_type)
+
+    exact = _positive_rates(
+        r.get("Hourly_Rate")
+        for r in rows
+        if _norm(str(r.get("Location", ""))) == loc
+        and _norm(str(r.get("Labour_Type", ""))) == typ
+    )
+    if len(exact) >= 5:
+        return exact
+
+    by_loc = _positive_rates(
+        r.get("Hourly_Rate")
+        for r in rows
+        if _norm(str(r.get("Location", ""))) == loc
+    )
+    if len(by_loc) >= 5:
+        return by_loc
+
+    by_type = _positive_rates(
+        r.get("Hourly_Rate")
+        for r in rows
+        if _norm(str(r.get("Labour_Type", ""))) == typ
+    )
+    if len(by_type) >= 5:
+        return by_type
+
+    return _positive_rates(r.get("Hourly_Rate") for r in rows)
+
+
+def _price_outlier(hourly_rate: float, peer_rates: list[float]):
+    """Simple robust check against peer median.
+    Outlier if rate is below 60% or above 180% of median.
+    """
+    if hourly_rate <= 0 or len(peer_rates) < 3:
+        return {
+            "price_outlier": False,
+            "price_median": None,
+            "price_low_threshold": None,
+            "price_high_threshold": None,
+            "price_outlier_reason": "",
+        }
+
+    median_rate = float(statistics.median(peer_rates))
+    low = round(median_rate * 0.60, 2)
+    high = round(median_rate * 1.80, 2)
+    is_outlier = hourly_rate < low or hourly_rate > high
+
+    reason = ""
+    if is_outlier:
+        direction = "below" if hourly_rate < low else "above"
+        reason = (
+            f"Hourly rate is {direction} expected range for similar posts "
+            f"(median={median_rate:.2f}, range={low:.2f}-{high:.2f})."
+        )
+
+    return {
+        "price_outlier": is_outlier,
+        "price_median": round(median_rate, 2),
+        "price_low_threshold": low,
+        "price_high_threshold": high,
+        "price_outlier_reason": reason,
+    }
 
 def _keyword_score(row, toks):
     if not toks:
@@ -312,13 +392,20 @@ def list_pending():
 
     items = []
     for r in pending:
+        hourly_rate = float(r.get("Hourly_Rate", 0) or 0)
+        peers = _labour_peer_rates(
+            rows=rows,
+            location=str(r.get("Location", "")),
+            labour_type=str(r.get("Labour_Type", "")),
+        )
+        fraud = _price_outlier(hourly_rate, peers)
         items.append({
             "id": str(r.get("Labour_ID", "")),
             "name": str(r.get("Name", "")),
             "location": str(r.get("Location", "")),
             "labour_type": str(r.get("Labour_Type", "")),
             "skill_level": str(r.get("Skill_Level", "")),
-            "hourly_rate": float(r.get("Hourly_Rate", 0) or 0),
+            "hourly_rate": hourly_rate,
             "rating": float(r.get("Rating", 0) or 0),
             "jobs_completed": int(r.get("Jobs_Completed", 0) or 0),
             "experience_years": int(r.get("Experience_Years", 0) or 0),
@@ -327,6 +414,7 @@ def list_pending():
             "available_day": str(r.get("Available_Day", "")),
             "available_time": str(r.get("Available_Time", "")),
             "moderation_status": "pending",
+            **fraud,
         })
 
     return jsonify({"count": len(items), "items": items})
