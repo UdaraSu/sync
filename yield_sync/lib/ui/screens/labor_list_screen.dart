@@ -322,18 +322,18 @@ class _LaborListScreenState extends State<LaborListScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: [
               _headerChip(
                 icon: Icons.location_on_rounded,
                 label: _args.location,
               ),
-              const SizedBox(width: 10),
               _headerChip(
                 icon: Icons.badge_rounded,
                 label: skillLabel,
               ),
-              const SizedBox(width: 10),
               _headerChip(
                 icon: Icons.people_alt_rounded,
                 label: "$count",
