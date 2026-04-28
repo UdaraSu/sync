@@ -53,32 +53,73 @@ class BookingService {
     final farmerPhone = (meData["phone"] ?? "").toString();
     final farmerEmail = (meData["email"] ?? "").toString();
 
-    // Find labourUid (labour account linked to labourId)
-    final labourQ = await _db
-        .collection("users")
-        .where("userType", isEqualTo: "labour")
-        .where("labourId", isEqualTo: labourId)
-        .limit(1)
-        .get();
+    // Prefer owner mapping from labour post itself (new posting flow)
+    String? labourUid;
+    Map<String, dynamic>? labourData;
 
-    if (labourQ.docs.isEmpty) {
-      throw Exception("This labour has no linked account (labourUid missing).");
+    final labourDoc = await _db.collection("labours").doc(labourId).get();
+    if (labourDoc.exists) {
+      labourData = labourDoc.data();
+    } else {
+      // Backward compatibility when Labour_ID is not used as Firestore doc id.
+      final labourByField = await _db
+          .collection("labours")
+          .where("Labour_ID", isEqualTo: labourId)
+          .limit(1)
+          .get();
+      if (labourByField.docs.isNotEmpty) {
+        labourData = labourByField.docs.first.data();
+      }
     }
 
-    final labourUid = labourQ.docs.first.id;
+    final fromPost = (labourData?["createdByUid"] ?? labourData?["ownerUid"])
+        ?.toString()
+        .trim();
+    if (fromPost != null && fromPost.isNotEmpty) {
+      labourUid = fromPost;
+    }
+
+    // Legacy fallback: look up classic labour account mapping users.labourId
+    if (labourUid == null || labourUid.isEmpty) {
+      final labourQ = await _db
+          .collection("users")
+          .where("userType", isEqualTo: "labour")
+          .where("labourId", isEqualTo: labourId)
+          .limit(1)
+          .get();
+      if (labourQ.docs.isNotEmpty) {
+        labourUid = labourQ.docs.first.id;
+      }
+    }
+
+    if (labourUid == null || labourUid.isEmpty) {
+      throw Exception("This labour has no linked account (createdByUid/labourUid missing).");
+    }
 
     final days = _daysInRange(start, end);
 
     await _db.runTransaction((tx) async {
-      // 1) lock each day (one booking per labour per day)
+      // 1) Firestore rule: do ALL reads before any writes.
+      final keyRefs = <DocumentReference<Map<String, dynamic>>>[];
       for (final d in days) {
         final keyId = "${labourId}_${_dateKey(d)}";
         final keyRef = _db.collection("booking_keys").doc(keyId);
+        keyRefs.add(keyRef);
+      }
+
+      for (final keyRef in keyRefs) {
         final keySnap = await tx.get(keyRef);
         if (keySnap.exists) {
-          throw Exception("This labour is already booked on ${_dateKey(d)}");
+          final data = keySnap.data();
+          final date = (data?["date"] ?? keyRef.id.split("_").last).toString();
+          throw Exception("This labour is already booked on $date");
         }
+      }
 
+      // 2) lock each day (one booking per labour per day)
+      for (int i = 0; i < days.length; i++) {
+        final d = days[i];
+        final keyRef = keyRefs[i];
         tx.set(keyRef, {
           "labourId": labourId,
           "date": _dateKey(d),
@@ -87,7 +128,7 @@ class BookingService {
         });
       }
 
-      // 2) create booking doc
+      // 3) create booking doc
       final bookingRef = _db.collection("bookings").doc();
       tx.set(bookingRef, {
         "bookingId": bookingRef.id,
