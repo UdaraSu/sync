@@ -628,7 +628,7 @@ export default function App() {
                 <div className="pending-block">
                   <h3 className="pending-heading">Labour — pending</h3>
                   <div className="table-wrap">
-                    <table>
+                    <table className="pending-table">
                       <thead>
                         <tr>
                           <th>Name</th>
@@ -663,9 +663,6 @@ export default function App() {
                               >
                                 {isLabourOutlier(ad) ? "Price outlier" : "Normal"}
                               </span>
-                              {ad.price_outlier_reason && (
-                                <div className="risk-reason">{ad.price_outlier_reason}</div>
-                              )}
                             </td>
                             <td>
                               <div className="action-cell">
@@ -719,7 +716,7 @@ export default function App() {
                 <div className="pending-block">
                   <h3 className="pending-heading">Equipment — pending</h3>
                   <div className="table-wrap">
-                    <table>
+                    <table className="pending-table">
                       <thead>
                         <tr>
                           <th>Type</th>
@@ -753,16 +750,6 @@ export default function App() {
                               >
                                 {isEquipmentOutlier(ad) ? "Price outlier" : "Normal"}
                               </span>
-                              {ad.hourly_price_outlier_reason && (
-                                <div className="risk-reason">
-                                  H: {ad.hourly_price_outlier_reason}
-                                </div>
-                              )}
-                              {ad.daily_price_outlier_reason && (
-                                <div className="risk-reason">
-                                  D: {ad.daily_price_outlier_reason}
-                                </div>
-                              )}
                             </td>
                             <td>
                               <div className="action-cell">
