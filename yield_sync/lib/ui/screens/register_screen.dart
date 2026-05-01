@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
 import '../../services/nav.dart';
 import '../../services/auth_service.dart';
 import '../widgets/app_text_field.dart';
-import '../widgets/primary_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -127,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isEquipment = _userType == "equipment";
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: const Color(0xFFF9FDF2),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -143,17 +143,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   "Register",
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  "CREATE ACCOUNT",
+                  style: GoogleFonts.inter(
+                    color: AppColors.darkGreen,
+                    fontSize: 10.5,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(28),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 children: [
@@ -162,21 +185,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Grow with\nYieldSync",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.96),
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            height: 1.1,
+                          "Join",
+                          style: GoogleFonts.poppins(
+                            fontSize: 29,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                            height: 1.0,
+                          ),
+                        ),
+                        Text(
+                          "YieldSync",
+                          style: GoogleFonts.poppins(
+                            fontSize: 29,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                            height: 1.0,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Create your account and get started",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.88),
-                            fontSize: 13.8,
-                            fontWeight: FontWeight.w600,
+                          "Set up your profile and start using smart tools.",
+                          style: GoogleFonts.inter(
+                            color: AppColors.textDark.withOpacity(0.68),
+                            fontSize: 13.2,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -187,11 +219,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 74,
                     height: 74,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      shape: BoxShape.circle,
+                      color: AppColors.primary.withOpacity(0.22),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(Icons.local_florist_rounded,
-                        color: AppColors.darkGreen, size: 38),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Image.asset(
+                        "assets/images/logo.png",
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -216,11 +254,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Personal Information",
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             fontSize: 16,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.textDark,
                           ),
                         ),
@@ -416,10 +454,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                         const SizedBox(height: 16),
 
-                        PrimaryButton(
-                          text: _loading ? "Creating..." : "Create Account",
-                          icon: Icons.person_add_alt_rounded,
-                          onPressed: _loading ? null : _register,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _loading ? null : _register,
+                            icon:
+                                const Icon(Icons.person_add_alt_rounded, size: 18),
+                            label: Text(
+                              _loading ? "Creating..." : "Create Account",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.darkGreen,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
                         ),
 
                         const SizedBox(height: 14),
