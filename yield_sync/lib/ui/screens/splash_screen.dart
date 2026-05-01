@@ -107,32 +107,45 @@ class SplashScreen extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          top: 86 * s,
-                          child: Container(
-                            width: 302 * s,
-                            height: 112 * s,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(160 * s),
+                          top: 10 * s,
+                          child: SizedBox(
+                            width: 350 * s,
+                            height: 350 * s,
+                            child: Image.asset(
+                              "assets/images/farmer-splash.png",
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
                         Positioned(
-                          top: 24 * s,
+                          bottom: 22 * s,
                           child: Container(
-                            width: 252 * s,
-                            height: 252 * s,
+                            width: 292 * s,
+                            height: 76 * s,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30 * s),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.all(20 * s),
-                              child: Image.asset(
-                                "assets/images/logo.png",
-                                fit: BoxFit.contain,
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(160 * s),
+                              border: Border.all(
+                                color: AppColors.primary.withOpacity(0.18),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.darkGreen.withOpacity(0.06),
+                                  blurRadius: 18 * s,
+                                  offset: Offset(0, 6 * s),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 34 * s,
+                          child: Container(
+                            width: 228 * s,
+                            height: 38 * s,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(120 * s),
                             ),
                           ),
                         ),
