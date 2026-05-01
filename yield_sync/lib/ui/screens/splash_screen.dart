@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_colors.dart';
 import '../../services/app_routes.dart';
 import '../../services/nav.dart';
@@ -8,196 +9,223 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-            child: Column(
-              children: [
-                // Top branding (like app header)
-                Row(
-                  children: [
-                    Container(
-                      height: 44,
-                      width: 44,
+      backgroundColor: const Color(0xFFF9FDF2),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final s = (w / 430).clamp(0.86, 1.06);
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20 * s, 10 * s, 20 * s, 16 * s),
+              child: Column(
+                children: [
+                  SizedBox(height: 18 * s),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12 * s, vertical: 6 * s),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.14)),
-                      ),
-                      child: const Icon(Icons.eco_rounded,
-                          color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      "YieldSync",
-                      style: TextStyle(
-                        color: AppColors.textLight.withOpacity(0.95),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.10),
+                        color: AppColors.primary.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(999),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.14)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Text(
-                        "Sri Lanka",
+                        "SMART FARM PLATFORM",
                         style: TextStyle(
-                          color: AppColors.textLight.withOpacity(0.9),
+                          color: AppColors.darkGreen,
+                          fontSize: 10.5 * s,
+                          letterSpacing: 1.0,
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                        ).merge(GoogleFonts.inter()),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 14 * s),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Farm Better With",
+                          style: GoogleFonts.poppins(
+                            fontSize: 34 * s,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                            height: 1.06,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        Text(
+                          "YieldSync.",
+                          style: GoogleFonts.poppins(
+                            fontSize: 34 * s,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                            height: 1.02,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8 * s),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "One app for labour hiring, equipment rentals,\nand data-driven farming decisions.",
+                      style: GoogleFonts.inter(
+                        color: AppColors.textDark.withOpacity(0.68),
+                        fontSize: 13.4 * s,
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 26 * s),
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned(
+                          left: 6 * s,
+                          top: 102 * s,
+                          child: RotatedBox(
+                            quarterTurns: 3,
+                            child: Text(
+                              "YIELD SYNC",
+                              style: GoogleFonts.inter(
+                                color: AppColors.textDark.withOpacity(0.85),
+                                fontSize: 10.5 * s,
+                                letterSpacing: 2.0,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 86 * s,
+                          child: Container(
+                            width: 302 * s,
+                            height: 112 * s,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(160 * s),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 24 * s,
+                          child: Container(
+                            width: 252 * s,
+                            height: 252 * s,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30 * s),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(20 * s),
+                              child: Image.asset(
+                                "assets/images/logo.png",
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10 * s),
+                  Text(
+                    "Trusted by modern farmers to simplify\ndaily operations from one place.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textDark.withOpacity(0.88),
+                      fontSize: 17 * s,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 22 * s),
+                  InkWell(
+                    onTap: () => Nav.replace(context, AppRoutes.login),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 104 * s,
+                      height: 104 * s,
+                      padding: EdgeInsets.all(6 * s),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.24),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.darkGreen.withOpacity(0.14),
+                            blurRadius: 18 * s,
+                            offset: Offset(0, 8 * s),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.darkGreen.withOpacity(0.14),
+                            width: 2.2 * s,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "ENTER",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.darkGreen,
+                                fontSize: 13.2 * s,
+                                letterSpacing: 0.7,
+                              ),
+                            ),
+                            SizedBox(height: 2 * s),
+                            // Icon(
+                            //   Icons.arrow_forward_rounded,
+                            //   size: 17 * s,
+                            //   color: AppColors.darkGreen.withOpacity(0.9),
+                            // ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-
-                // ✅ This keeps the card perfectly centered
-                const Expanded(child: SizedBox()),
-
-                // Center Welcome Card (modern UI)
-                Container(
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxWidth: 440),
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: Colors.white.withOpacity(0.14)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
-                        blurRadius: 28,
-                        offset: const Offset(0, 18),
-                      ),
-                    ],
                   ),
-                  child: Column(
-                    children: [
-                      // LOGO card
-                      Container(
-                        width: 94,
-                        height: 94,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Image.asset(
-                            "assets/images/logo.jpg",
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Welcome",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textLight.withOpacity(0.98),
-                          fontSize: 38,
-                          fontWeight: FontWeight.w900,
-                          height: 1.05,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Find skilled workers & manage\nyour workflow with YieldSync.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textLight.withOpacity(0.78),
-                          fontSize: 14.5,
-                          height: 1.35,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: size.width * 0.70,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              Nav.replace(context, AppRoutes.login),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.darkGreen,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          child: const Text(
-                            "Let’s get started",
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  SizedBox(height: 6 * s),
+                  Text(
+                    "Tap to continue",
+                    style: GoogleFonts.inter(
+                      color: AppColors.textDark.withOpacity(0.5),
+                      fontSize: 11.5 * s,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
                   ),
-                ),
-
-                // ✅ This balances the screen so it stays centered
-                const Expanded(child: SizedBox()),
-
-                // Bottom items stay at bottom
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _dot(active: true),
-                    const SizedBox(width: 8),
-                    _dot(active: false),
-                    const SizedBox(width: 8),
-                    _dot(active: false),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  "v1.0 UI Stage",
-                  style: TextStyle(
-                    color: AppColors.textLight.withOpacity(0.55),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.5,
+                  SizedBox(height: 8 * s),
+                  Text(
+                    "Fast setup. Real-time access. Better outcomes.",
+                    style: GoogleFonts.inter(
+                      color: AppColors.textDark.withOpacity(0.58),
+                      fontSize: 11.8 * s,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
+                  SizedBox(height: 8 * s),
+                ],
+              ),
+            );
+          },
         ),
-      ),
-    );
-  }
-
-  static Widget _dot({required bool active}) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      width: active ? 28 : 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: active ? AppColors.primary : Colors.white.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(999),
       ),
     );
   }

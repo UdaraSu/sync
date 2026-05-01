@@ -28,12 +28,23 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textDark,
         titleTextStyle: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w900,
+          color: AppColors.textDark,
+        ),
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.white,
+        selectedColor: AppColors.primary.withOpacity(0.2),
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w800,
           color: AppColors.textDark,
         ),
       ),
@@ -186,6 +197,16 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+      ),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: AppColors.darkGreen,
+        unselectedItemColor: AppColors.muted,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
 
       // ✅ Dialogs (your dialogs will look nicer automatically)
