@@ -139,13 +139,30 @@ class SplashScreen extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          bottom: 34 * s,
-                          child: Container(
-                            width: 228 * s,
-                            height: 38 * s,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(120 * s),
+                          bottom: 40 * s,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12 * s,
+                                vertical: 6 * s,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Text(
+                                "Empowered Happy Frmers",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.5 * s,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FontStyle.italic,
+                                  color: AppColors.darkGreen.withOpacity(0.82),
+                                ),
+                              ),
                             ),
                           ),
                         ),
