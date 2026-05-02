@@ -60,7 +60,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF9FDF2),
       drawer: const _HomeDrawer(),
       body: const SafeArea(child: _HomeDashboardView()),
 
@@ -445,6 +445,53 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
     _weatherFuture = WeatherService.fetchByLatLon(7.2906, 80.6337);
   }
 
+  static String _formatHeaderDate(DateTime d) {
+    const weekdays = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return "${weekdays[d.weekday - 1]}, ${d.day.toString().padLeft(2, "0")} "
+        "${months[d.month - 1]} ${d.year}";
+  }
+
+  static String _greetingForHour(int hour) {
+    if (hour < 12) return "Hello, Good Morning";
+    if (hour < 17) return "Hello, Good Afternoon";
+    return "Hello, Good Evening";
+  }
+
+  Future<void> _onDashboardRefresh() async {
+    setState(() {
+      _today = DateTime.now();
+      _todayAdvisories = _advisoryService.advisoriesForDate(_today);
+      _weatherFuture = WeatherService.fetchByLatLon(7.2906, 80.6337);
+    });
+    try {
+      await _weatherFuture;
+    } catch (_) {
+      if (mounted) setState(() {});
+    }
+  }
+
   Future<void> _logout(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -542,28 +589,30 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       return 0;
     });
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final now = DateTime.now();
+    return RefreshIndicator(
+      onRefresh: _onDashboardRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0F6A43), Color(0xFF0B5A37)],
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.border),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F6A43).withOpacity(0.35),
-                    blurRadius: 22,
-                    offset: const Offset(0, 12),
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 26,
+                    offset: const Offset(0, 16),
                   ),
                 ],
               ),
@@ -576,7 +625,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: AppColors.primary.withOpacity(0.14),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -588,7 +637,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                       width: 92,
                       height: 92,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: AppColors.primary.withOpacity(0.08),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -600,9 +649,10 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                     children: [
                       IconButton(
                         onPressed: () => Scaffold.of(context).openDrawer(),
-                        icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                        icon: const Icon(Icons.menu_rounded,
+                            color: AppColors.darkGreen),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.10),
+                          backgroundColor: AppColors.primary.withOpacity(0.18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -618,17 +668,17 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    "Hello, Good Morning",
+                    _greetingForHour(now.hour),
                     style: GoogleFonts.poppins(
-                      color: Colors.white,
+                      color: AppColors.textDark,
                       fontWeight: FontWeight.w600,
                       fontSize: 24,
                     ),
                   ),
                   Text(
-                    "Friday, 01 May 2026",
+                    _formatHeaderDate(now),
                     style: GoogleFonts.inter(
-                      color: Colors.white.withOpacity(0.82),
+                      color: AppColors.textDark.withOpacity(0.62),
                       fontWeight: FontWeight.w500,
                       fontSize: 13,
                     ),
@@ -641,17 +691,17 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                         return Container(
                           height: 118,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.10),
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                            border: Border.all(color: AppColors.border),
                           ),
                           alignment: Alignment.center,
-                          child: const SizedBox(
-                            width: 20,
-                            height: 20,
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.darkGreen.withOpacity(0.85),
                             ),
                           ),
                         );
@@ -660,21 +710,21 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                       return Container(
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white.withOpacity(0.22)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           children: [
                             Row(
                               children: [
                                 Icon(Icons.location_on_rounded,
-                                    color: Colors.white.withOpacity(0.9), size: 16),
+                                    color: AppColors.darkGreen, size: 16),
                                 const SizedBox(width: 5),
                                 Text(
                                   w.city,
                                   style: GoogleFonts.inter(
-                                    color: Colors.white,
+                                    color: AppColors.textDark,
                                     fontSize: 13.2,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -683,7 +733,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                                 Text(
                                   w.condition,
                                   style: GoogleFonts.inter(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: AppColors.textDark.withOpacity(0.78),
                                     fontSize: 12.4,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -696,15 +746,16 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                                 Text(
                                   "${w.tempC.round()}°C",
                                   style: GoogleFonts.poppins(
-                                    color: Colors.white,
+                                    color: AppColors.darkGreen,
                                     fontSize: 42,
                                     height: 1,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 const Spacer(),
-                                const Icon(Icons.cloud_rounded,
-                                    color: Colors.white, size: 34),
+                                Icon(Icons.cloud_rounded,
+                                    color: AppColors.primary.withOpacity(0.95),
+                                    size: 34),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -712,7 +763,13 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                               children: [
                                 Expanded(child: _HeaderMetric(title: "Humidity", value: "${w.humidity.round()}%")),
                                 Expanded(child: _HeaderMetric(title: "Rain", value: "${w.rainfallMm.toStringAsFixed(1)} mm")),
-                                const Expanded(child: _HeaderMetric(title: "Wind", value: "18 km/h")),
+                                Expanded(
+                                  child: _HeaderMetric(
+                                    title: "Wind",
+                                    value:
+                                        "${w.windSpeedKmh.round()} km/h",
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -851,6 +908,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -1727,8 +1785,8 @@ class _HeaderIconBtn extends StatelessWidget {
         onTap: onTap,
         child: CircleAvatar(
           radius: 18,
-          backgroundColor: Colors.white.withOpacity(0.14),
-          child: Icon(icon, color: Colors.white),
+          backgroundColor: AppColors.primary.withOpacity(0.22),
+          child: Icon(icon, color: AppColors.darkGreen),
         ),
       ),
     );
@@ -1797,7 +1855,7 @@ class _HeaderMetric extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withOpacity(0.78),
+            color: AppColors.textDark.withOpacity(0.52),
           ),
         ),
         const SizedBox(height: 2),
@@ -1806,7 +1864,7 @@ class _HeaderMetric extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 12.8,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.textDark,
           ),
         ),
       ],

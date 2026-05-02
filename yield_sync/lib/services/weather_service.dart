@@ -8,6 +8,8 @@ class WeatherInfo {
   final double rainfallMm;
   final String condition;
   final String city;
+  /// Wind speed in km/h (from API or mock).
+  final double windSpeedKmh;
 
   WeatherInfo({
     required this.tempC,
@@ -15,6 +17,7 @@ class WeatherInfo {
     required this.rainfallMm,
     required this.condition,
     required this.city,
+    this.windSpeedKmh = 0,
   });
 }
 
@@ -26,12 +29,23 @@ class WeatherService {
     // ✅ UI STAGE (MOCK)
     if (openWeatherKey == "YOUR_OPENWEATHER_API_KEY") {
       await Future.delayed(const Duration(milliseconds: 600));
+      // Demo data: tied to time so the UI visibly changes between sessions.
+      final now = DateTime.now();
+      final seed = now.day + now.hour + now.minute;
+      final variants = <({double t, int h, double rain, String c, double w})>[
+        (t: 27.2, h: 74, rain: 8.2, c: "Cloudy", w: 12),
+        (t: 29.1, h: 68, rain: 0.0, c: "Clear", w: 8),
+        (t: 26.4, h: 81, rain: 22.0, c: "Rain", w: 18),
+        (t: 28.0, h: 71, rain: 3.5, c: "Partly cloudy", w: 15),
+      ];
+      final v = variants[seed % variants.length];
       return WeatherInfo(
-        tempC: 28.6,
-        humidity: 72,
-        rainfallMm: 12.4,
-        condition: "Cloudy",
-        city: "Anuradhapura",
+        tempC: v.t,
+        humidity: v.h.toDouble(),
+        rainfallMm: v.rain,
+        condition: v.c,
+        city: "Malabe, Colombo",
+        windSpeedKmh: v.w,
       );
     }
 
@@ -60,12 +74,20 @@ class WeatherService {
       if (rainObj["3h"] != null) rain = (rainObj["3h"] as num).toDouble();
     }
 
+    double windMs = 0;
+    final windObj = data["wind"];
+    if (windObj is Map && windObj["speed"] != null) {
+      windMs = (windObj["speed"] as num).toDouble();
+    }
+    final windKmh = windMs * 3.6;
+
     return WeatherInfo(
       tempC: temp,
       humidity: humidity,
       rainfallMm: rain,
       condition: condition,
       city: city,
+      windSpeedKmh: windKmh,
     );
   }
 }
