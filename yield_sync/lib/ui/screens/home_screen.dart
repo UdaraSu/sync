@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
 import '../../services/app_routes.dart';
 import '../../services/seasonal_market_advisory_service.dart';
 import '../../services/seasonal_notification_service.dart';
+import '../../services/weather_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -57,49 +59,53 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: const Color(0xFFF1F5F9),
       drawer: const _HomeDrawer(),
       body: const SafeArea(child: _HomeDashboardView()),
 
-      // ✅ Bottom home pill (kept, slightly improved)
       bottomNavigationBar: SafeArea(
         top: false,
-        child: SizedBox(
-          height: 68,
-          child: BottomAppBar(
-            color: Colors.white,
-            elevation: 0,
-            padding: EdgeInsets.zero,
-            child: Center(
-              child: Material(
-                color: AppColors.primary.withOpacity(0.12),
-                shape: StadiumBorder(
-                  side: BorderSide(color: AppColors.border),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
-                child: InkWell(
-                  customBorder: const StadiumBorder(),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _BottomNavItem(
+                  icon: Icons.home_rounded,
+                  label: "Home",
+                  active: true,
                   onTap: () => _goHome(context),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 11),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.home_rounded,
-                            color: AppColors.darkGreen),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Home",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textDark.withOpacity(0.92),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              ),
+                _BottomNavItem(
+                  icon: Icons.groups_rounded,
+                  label: "Labour",
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.laborHire),
+                ),
+                _BottomNavItem(
+                  icon: Icons.storefront_rounded,
+                  label: "Market",
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.market),
+                ),
+                _BottomNavItem(
+                  icon: Icons.person_rounded,
+                  label: "Profile",
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+                ),
+              ],
             ),
           ),
         ),
@@ -150,7 +156,7 @@ class _HomeDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.surface,
+      backgroundColor: const Color(0xFFF9FDF2),
       child: SafeArea(
         child: Column(
           children: [
@@ -242,8 +248,9 @@ class _DrawerHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: AppColors.heroGradient,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.border.withOpacity(0.8))),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
         ),
@@ -254,14 +261,17 @@ class _DrawerHeader extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: AppColors.primary.withOpacity(0.22),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: AppColors.border,
                 width: 1,
               ),
             ),
-            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 26),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset("assets/images/logo.png", fit: BoxFit.contain),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -270,19 +280,18 @@ class _DrawerHeader extends StatelessWidget {
               children: [
                 Text(
                   "YieldSync",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white.withOpacity(0.98),
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
                     fontSize: 18,
-                    letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "Navigation",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.75),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textDark.withOpacity(0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -317,8 +326,8 @@ class _DrawerSectionTitle extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             title.toUpperCase(),
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
               color: AppColors.textDark.withOpacity(0.55),
               fontSize: 11,
               letterSpacing: 0.8,
@@ -381,10 +390,10 @@ class _DrawerTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
-                      fontSize: 15,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark.withOpacity(0.95),
+                      fontSize: 15.2,
                     ),
                   ),
                 ),
@@ -416,6 +425,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
   List<SeasonalMarketAdvisory> _todayAdvisories =
       <SeasonalMarketAdvisory>[];
   late DateTime _today;
+  late Future<WeatherInfo> _weatherFuture;
 
   @override
   void initState() {
@@ -423,6 +433,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
     _today = DateTime.now();
     _todayAdvisories = _advisoryService.advisoriesForDate(_today);
     SeasonalNotificationService.instance.notifyForTodayIfNeeded();
+    _weatherFuture = WeatherService.fetchByLatLon(7.2906, 80.6337);
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -476,28 +487,28 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       ),
       _ActionItem(
         title: "Hire Labour",
-        subtitle: "Skilled farm workers for all crops",
+        subtitle: "Skilled workers",
         icon: Icons.groups_rounded,
         iconBg: const Color(0xFF15B77E),
         route: AppRoutes.laborHire,
       ),
       _ActionItem(
         title: "Rent Equipment",
-        subtitle: "Tractors, harvesters & more",
+        subtitle: "Tractors and more",
         icon: Icons.agriculture_rounded,
         iconBg: const Color(0xFF1C9BE8),
         route: AppRoutes.equipmentRent,
       ),
       _ActionItem(
         title: "Match Crop",
-        subtitle: "Smart crop pick",
+        subtitle: "AI crop guidance",
         icon: Icons.spa_rounded,
         iconBg: const Color(0xFF9B8CFF),
         route: AppRoutes.matchCrop,
       ),
       _ActionItem(
         title: "Market",
-        subtitle: "Live prices",
+        subtitle: "Daily prices",
         icon: Icons.storefront_rounded,
         iconBg: const Color(0xFFFFB74D),
         route: AppRoutes.market,
@@ -510,433 +521,1019 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
         route: AppRoutes.soilQuality,
       ),
     ];
+    final offers = [...actions];
+    offers.sort((a, b) {
+      if (a.title == "Hire Labour") return -1;
+      if (b.title == "Hire Labour") return 1;
+      return 0;
+    });
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          // ===================== HERO HEADER (upgraded) =====================
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-            decoration: const BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F6A43), Color(0xFF0B5A37)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F6A43).withOpacity(0.35),
+                    blurRadius: 22,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
               ),
-            ),
-            child: Stack(
-              children: [
-                const Positioned(
-                  right: -12,
-                  top: 26,
-                  child: Opacity(
-                    opacity: 0.10,
-                    child: Icon(Icons.agriculture_rounded,
-                        size: 150, color: Colors.white),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -26,
+                    top: -20,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
-                ),
-                const Positioned(
-                  right: 18,
-                  bottom: -14,
-                  child: Opacity(
-                    opacity: 0.10,
-                    child: Icon(Icons.park_rounded,
-                        size: 130, color: Colors.white),
+                  Positioned(
+                    right: 40,
+                    bottom: -30,
+                    child: Container(
+                      width: 92,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top Row (Menu + Brand + profile + logout)
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Scaffold.of(context).openDrawer();
-                          },
-                          icon: Icon(
-                            Icons.menu_rounded,
-                            color: Colors.white.withOpacity(0.95),
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                        icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 44,
-                          height: 44,
+                      ),
+                      const Spacer(),
+                      _HeaderIconBtn(
+                        icon: Icons.person_rounded,
+                        tooltip: "Profile",
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Hello, Good Morning",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 24,
+                    ),
+                  ),
+                  Text(
+                    "Friday, 01 May 2026",
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.82),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<WeatherInfo>(
+                    future: _weatherFuture,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Container(
+                          height: 118,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.14)),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
                           ),
-                          child: const Icon(Icons.eco_rounded,
-                              color: AppColors.primary),
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      }
+                      final w = snapshot.data!;
+                      return Container(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white.withOpacity(0.22)),
                         ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Column(
                           children: [
-                            Text(
-                              "YieldSync",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.96),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15.8,
-                              ),
-                            ),
-                            Text(
-                              "SRI LANKA",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.72),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11.5,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            _HeaderIconBtn(
-                              icon: Icons.person_rounded,
-                              tooltip: "Profile",
-                              onTap: () => Navigator.pushNamed(
-                                  context, AppRoutes.profile),
-                            ),
-                            const SizedBox(width: 10),
-                            _HeaderIconBtn(
-                              icon: Icons.logout_rounded,
-                              tooltip: "Logout",
-                              onTap: () => _logout(context),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(999),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.14)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.bolt_rounded,
-                              color: AppColors.primary, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Smart farming • Hire • Rent • Forecast",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.90),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Text(
-                      "Everything for\nYour Farm",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.98),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 28.5,
-                        height: 1.10,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Find labour, rent equipment and get\nsmart suggestions across Sri Lanka",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.72),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.6,
-                        height: 1.25,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // ✅ Updated stats: Equipment 500+ | Labour 500+ | Districts 25 | Rating 4.8
-                    const Row(
-                      children: [
-                        Expanded(
-                          child: _StatCard(
-                            value: "500+",
-                            label: "Equipment",
-                            icon: Icons.agriculture_rounded,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: _StatCard(
-                            value: "500+",
-                            label: "Labour",
-                            icon: Icons.groups_rounded,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: _StatCard(
-                            value: "25",
-                            label: "Districts",
-                            icon: Icons.map_rounded,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: _StatCard(
-                            value: "4.8",
-                            label: "Rating",
-                            icon: Icons.star_rounded,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // ✅ Modern CTA Row (super interactive)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              onPressed: () => Navigator.pushNamed(
-                                  context, AppRoutes.market),
-                              icon: const Icon(Icons.trending_up_rounded),
-                              label: const Text(
-                                "Market Prices",
-                                style: TextStyle(fontWeight: FontWeight.w900),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppColors.darkGreen,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_rounded,
+                                    color: Colors.white.withOpacity(0.9), size: 16),
+                                const SizedBox(width: 5),
+                                Text(
+                                  w.city,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 13.2,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
+                                const Spacer(),
+                                Text(
+                                  w.condition,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 12.4,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          height: 46,
-                          width: 54,
-                          child: OutlinedButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, AppRoutes.profile),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(
-                                  color: Colors.white.withOpacity(0.25)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  "${w.tempC.round()}°C",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 42,
+                                    height: 1,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(Icons.cloud_rounded,
+                                    color: Colors.white, size: 34),
+                              ],
                             ),
-                            child: const Icon(Icons.settings_rounded),
-                          ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(child: _HeaderMetric(title: "Humidity", value: "${w.humidity.round()}%")),
+                                Expanded(child: _HeaderMetric(title: "Rain", value: "${w.rainfallMm.toStringAsFixed(1)} mm")),
+                                const Expanded(child: _HeaderMetric(title: "Wind", value: "18 km/h")),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Text(
+                  "My Fields",
+                  style: GoogleFonts.poppins(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.soilQuality),
+                  child: Text(
+                    "See all",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.darkGreen,
                     ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _FieldChip(label: "All", active: true),
+                  _FieldChip(label: "Carrots"),
+                  _FieldChip(label: "Vegetable"),
+                  _FieldChip(label: "Fruit"),
+                  _FieldChip(label: "Pumpkin"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  "Best Offers",
+                  style: GoogleFonts.poppins(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.market),
+                  child: Text(
+                    "View all",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.darkGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: offers.take(5).map((a) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: _OfferTile(
+                      item: a,
+                      onTap: () => Navigator.pushNamed(context, a.route!),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.tips_and_updates_rounded,
+                        color: AppColors.darkGreen, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Tip: Keep your market and weather insights updated before making crop and equipment decisions.",
+                      style: GoogleFonts.inter(
+                        fontSize: 12.4,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark.withOpacity(0.72),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _SeasonalMarketAlertCard(
+              today: _today,
+              service: _advisoryService,
+              advisories: _todayAdvisories,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernKpiCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _ModernKpiCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.darkGreen, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11.5,
+                    color: AppColors.textDark.withOpacity(0.64),
+                  ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 14),
-          _SeasonalMarketAlertCard(
-            today: _today,
-            service: _advisoryService,
-            advisories: _todayAdvisories,
+class _WeatherOverviewCard extends StatelessWidget {
+  final WeatherInfo info;
+
+  const _WeatherOverviewCard({required this.info});
+
+  String _weekdayName(int weekday) {
+    const names = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ];
+    return names[(weekday - 1).clamp(0, 6)];
+  }
+
+  String _monthName(int month) {
+    const names = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+    return names[(month - 1).clamp(0, 11)];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final dateLabel = "${_weekdayName(now.weekday)}, ${now.day.toString().padLeft(2, '0')} ${_monthName(now.month)} ${now.year}";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on_rounded,
+                  color: AppColors.darkGreen.withOpacity(0.82), size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  info.city,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15.2,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ),
+              Text(
+                info.condition,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.4,
+                  color: AppColors.textDark.withOpacity(0.64),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                "${info.tempC.round()}°C",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 42,
+                  height: 1,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.cloud_rounded,
+                    color: AppColors.darkGreen, size: 32),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _WeatherMetric(
+                  title: "Humidity",
+                  value: "${info.humidity.round()}%",
+                ),
+              ),
+              Expanded(
+                child: _WeatherMetric(
+                  title: "Rain",
+                  value: "${info.rainfallMm.toStringAsFixed(1)} mm",
+                ),
+              ),
+              const Expanded(
+                child: _WeatherMetric(
+                  title: "Pressure",
+                  value: "1008 hPa",
+                ),
+              ),
+              const Expanded(
+                child: _WeatherMetric(
+                  title: "Wind",
+                  value: "18 km/h",
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Divider(color: AppColors.border.withOpacity(0.8), height: 1),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF4DA),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.wb_sunny_outlined,
+                        size: 16,
+                        color: Color(0xFFE5A100),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "5:25 am\nSunrise",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 1.3,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark.withOpacity(0.72),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 30,
+                color: AppColors.border.withOpacity(0.9),
+              ),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      "8:04 pm\nSunset",
+                      textAlign: TextAlign.right,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 1.3,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark.withOpacity(0.72),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE9EEFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.nights_stay_outlined,
+                        size: 16,
+                        color: Color(0xFF5667B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-          // ===================== QUICK ACTIONS (upgraded header + chips) =====================
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+class _WeatherMetric extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _WeatherMetric({
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 11.4,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textDark.withOpacity(0.58),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 13.4,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeatherCardSkeleton extends StatelessWidget {
+  const _WeatherCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 170,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+      ),
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(strokeWidth: 2),
+    );
+  }
+}
+
+class _PrimaryDashboardAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool outlined;
+  final VoidCallback onTap;
+
+  const _PrimaryDashboardAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.outlined = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 13.5,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (outlined) {
+      return SizedBox(
+        height: 48,
+        child: OutlinedButton(
+          onPressed: onTap,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.darkGreen,
+            side: const BorderSide(color: AppColors.border),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: child,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.darkGreen,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _ServiceListCard extends StatelessWidget {
+  final _ActionItem item;
+  final VoidCallback onTap;
+
+  const _ServiceListCard({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: item.iconBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(item.icon, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.5,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12.8,
+                          color: AppColors.textDark.withOpacity(0.62),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textDark.withOpacity(0.42),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniCategoryCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const _MiniCategoryCard({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.025),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, size: 17, color: AppColors.darkGreen),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11.3,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark.withOpacity(0.9),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OfferTile extends StatelessWidget {
+  final _ActionItem item;
+  final VoidCallback onTap;
+
+  const _OfferTile({
+    required this.item,
+    required this.onTap,
+  });
+
+  String? _imageForTitle(String title) {
+    final t = title.toLowerCase();
+    if (t.contains("labour")) return "assets/images/labour.jpeg";
+    if (t.contains("market") || t.contains("price")) {
+      return "assets/images/price.jpeg";
+    }
+    if (t.contains("fertilizer") || t.contains("fertiliser")) {
+      return "assets/images/fertilizer.jpeg";
+    }
+    if (t.contains("crop") || t.contains("match")) {
+      return "assets/images/crop.jpg";
+    }
+    if (t.contains("equipment") || t.contains("tractor")) {
+      return "assets/images/tractor.jpeg";
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 172,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Ink(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: AppColors.border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 22,
-                  offset: const Offset(0, 14),
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                Container(
+                  height: 112,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        item.iconBg.withOpacity(0.92),
+                        item.iconBg.withOpacity(0.68),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      "Quick Actions",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // ✅ quick filter chips (no backend)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
+                  ),
+                  child: Stack(
                     children: [
-                      _PillChip(
-                        icon: Icons.science_rounded,
-                        label: "Suggestions",
-                        onTap: () => Navigator.pushNamed(
-                            context, AppRoutes.fertilizerForm),
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: _imageForTitle(item.title) != null
+                              ? Image.asset(
+                                  _imageForTitle(item.title)!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  color: Colors.transparent,
+                                  child: Center(
+                                    child: Icon(item.icon,
+                                        color: Colors.white, size: 30),
+                                  ),
+                                ),
+                        ),
                       ),
-                      _PillChip(
-                        icon: Icons.groups_rounded,
-                        label: "Labour",
-                        onTap: () =>
-                            Navigator.pushNamed(context, AppRoutes.laborHire),
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.12),
+                                Colors.black.withOpacity(0.28),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      _PillChip(
-                        icon: Icons.agriculture_rounded,
-                        label: "Equipment",
-                        onTap: () => Navigator.pushNamed(
-                            context, AppRoutes.equipmentRent),
-                      ),
-                      _PillChip(
-                        icon: Icons.storefront_rounded,
-                        label: "Market",
-                        onTap: () =>
-                            Navigator.pushNamed(context, AppRoutes.market),
-                      ),
-                      _PillChip(
-                        icon: Icons.grass_rounded,
-                        label: "Soil",
-                        onTap: () =>
-                            Navigator.pushNamed(context, AppRoutes.soilQuality),
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.24),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            "Featured",
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 10.6,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 14),
-
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: actions.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.92,
+                const SizedBox(height: 8),
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
                   ),
-                  itemBuilder: (context, i) {
-                    final a = actions[i];
-                    return _ActionCard(
-                      item: a,
-                      onTap: () => Navigator.pushNamed(context, a.route!),
-                    );
-                  },
+                ),
+                Text(
+                  item.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 1.25,
+                    color: AppColors.textDark.withOpacity(0.62),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        "Explore",
+                        style: GoogleFonts.inter(
+                          fontSize: 11.6,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.darkGreen,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.arrow_forward_rounded,
+                        size: 16, color: AppColors.darkGreen.withOpacity(0.9)),
+                  ],
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 18),
-
-          // ===================== FEATURED STRIP (simple, modern) =====================
-          // Container(
-          //   width: double.infinity,
-          //   margin: const EdgeInsets.symmetric(horizontal: 16),
-          //   padding: const EdgeInsets.all(16),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white,
-          //     borderRadius: BorderRadius.circular(24),
-          //     border: Border.all(color: AppColors.border),
-          //   ),
-          //   child: Row(
-          //     children: [
-          //       Container(
-          //         width: 46,
-          //         height: 46,
-          //         decoration: BoxDecoration(
-          //           color: AppColors.primary.withOpacity(0.18),
-          //           borderRadius: BorderRadius.circular(16),
-          //         ),
-          //         child: const Icon(Icons.verified_rounded,
-          //             color: AppColors.darkGreen),
-          //       ),
-          //       const SizedBox(width: 12),
-          //       Expanded(
-          //         child: Column(
-          //           crossAxisAlignment: CrossAxisAlignment.start,
-          //           children: [
-          //             const Text(
-          //               "Trusted network",
-          //               style: TextStyle(
-          //                 fontWeight: FontWeight.w900,
-          //                 color: AppColors.textDark,
-          //               ),
-          //             ),
-          //             const SizedBox(height: 2),
-          //             Text(
-          //               "Verified labour & equipment providers",
-          //               style: TextStyle(
-          //                 fontWeight: FontWeight.w700,
-          //                 color: AppColors.textDark.withOpacity(0.60),
-          //               ),
-          //             ),
-          //           ],
-          //         ),
-          //       ),
-          //       const Icon(Icons.arrow_forward_ios_rounded,
-          //           size: 16, color: AppColors.darkGreen),
-          //     ],
-          //   ),
-          // ),
-
-          const SizedBox(height: 22),
-        ],
+        ),
       ),
     );
   }
@@ -995,9 +1592,9 @@ class _SeasonalMarketAlertCard extends StatelessWidget {
                 child: Text(
                   "Seasonal Market Alert",
                   style: TextStyle(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textDark,
-                    fontSize: 14.6,
+                    fontSize: 15.2,
                   ),
                 ),
               ),
@@ -1006,18 +1603,19 @@ class _SeasonalMarketAlertCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             "$season - $monthName Week $week",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
               color: AppColors.textDark.withOpacity(0.65),
-              fontSize: 12.2,
+              fontSize: 12.8,
             ),
           ),
           const SizedBox(height: 10),
           if (advisories.isEmpty)
             Text(
               "No HOLD/SELL alert for this week. Monitor market trend and check next week.",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w500,
+                height: 1.35,
                 color: AppColors.textDark.withOpacity(0.70),
               ),
             )
@@ -1111,8 +1709,117 @@ class _HeaderIconBtn extends StatelessWidget {
         onTap: onTap,
         child: CircleAvatar(
           radius: 18,
-          backgroundColor: Colors.white.withOpacity(0.12),
+          backgroundColor: Colors.white.withOpacity(0.14),
           child: Icon(icon, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool active;
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                size: 19, color: active ? AppColors.darkGreen : AppColors.textDark),
+            if (active) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.darkGreen,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderMetric extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _HeaderMetric({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withOpacity(0.78),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 12.8,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FieldChip extends StatelessWidget {
+  final String label;
+  final bool active;
+
+  const _FieldChip({required this.label, this.active = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary.withOpacity(0.25) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark.withOpacity(0.9),
+          ),
         ),
       ),
     );
@@ -1149,10 +1856,10 @@ class _PillChip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textDark,
-                    fontSize: 12.4,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark.withOpacity(0.92),
+                    fontSize: 12.6,
                   ),
                 ),
               ],
@@ -1180,29 +1887,29 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.14)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: Colors.white.withOpacity(0.92)),
+          Icon(icon, size: 16, color: AppColors.darkGreen),
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.96),
-              fontWeight: FontWeight.w900,
+            style: GoogleFonts.poppins(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w700,
               fontSize: 15.6,
             ),
           ),
           const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.72),
-              fontWeight: FontWeight.w700,
+            style: GoogleFonts.inter(
+              color: AppColors.textDark.withOpacity(0.62),
+              fontWeight: FontWeight.w600,
               fontSize: 11.2,
             ),
           ),
@@ -1276,10 +1983,10 @@ class _ActionCard extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
-                        fontSize: 14,
+                        fontSize: 14.4,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1287,10 +1994,11 @@ class _ActionCard extends StatelessWidget {
                       item.subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontWeight: FontWeight.w500,
                         color: AppColors.textDark.withOpacity(0.6),
-                        fontSize: 12,
+                        fontSize: 12.4,
+                        height: 1.3,
                       ),
                     ),
                   ],

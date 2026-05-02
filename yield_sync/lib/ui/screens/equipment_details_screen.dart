@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../utils/app_colors.dart';
+import '../../utils/equipment_image_asset.dart';
 import '../widgets/app_shell.dart';
 import '../../services/equipment_api.dart';
 import '../../services/equipment_booking_service.dart';
@@ -200,10 +201,6 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
 
   // ================= image helpers (NEW) =================
 
-  // normalize text for matching
-  String _n(String x) =>
-      x.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
-
   IconData _iconForType(String t) {
     final s = t.toLowerCase();
     if (s.contains("tractor")) return Icons.agriculture_rounded;
@@ -221,104 +218,6 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
     if (s.contains("grass") || s.contains("cutter"))
       return Icons.content_cut_rounded;
     return Icons.build_rounded;
-  }
-
-  /// Uses equipmentType + optional fields if available.
-  /// NOTE: folder path below uses `equpment` because your screenshot showed that folder name.
-  String? _assetForDetails(EquipmentDetails e) {
-    final type = _n(e.equipmentType);
-    final id = _n(e.id);
-
-    // If your EquipmentDetails has extra fields (like forCrop/name/model), safe fallback to empty
-    final all = "$type $id";
-
-    // Tractor
-    if (all.contains("tractor")) {
-      if (all.contains("new holland") || all.contains("3630")) {
-        return "images/equpment/tractor-New-Holland3630TX.jpeg";
-      }
-      if (all.contains("mahindra") || all.contains("475")) {
-        return "images/equpment/tractor-Mahindra475DI.jpg";
-      }
-      return "images/equpment/tractor-New-Holland3630TX.jpeg";
-    }
-
-    // Harvester / combine
-    if (all.contains("harvest") || all.contains("combine")) {
-      if (all.contains("kubota") || all.contains("dc 70")) {
-        return "images/equpment/harvester-Kubota-DC-70.jpg";
-      }
-      if (all.contains("claas") || all.contains("tiger")) {
-        return "images/equpment/harvester-CLAAS-CROP-TIGER.jpg";
-      }
-      return "images/equpment/combine-Harvester.webp";
-    }
-
-    // Rotavator
-    if (all.contains("rotavator")) {
-      if (all.contains("shaktiman")) {
-        return "images/equpment/rotavator-Shaktiman-Side-Shift.png";
-      }
-      return "images/equpment/rotavator-Fieldking-FKRTMG.jpg";
-    }
-
-    // Plough
-    if (all.contains("plough")) {
-      if (all.contains("disc")) {
-        return "images/equpment/Plough-Disc3-Bottom.jpg";
-      }
-      return "images/equpment/plough-Mould-Board2Bottom.jpg";
-    }
-
-    // Sprayer / power sprayer
-    if (all.contains("spray")) {
-      if (all.contains("neptune")) {
-        return "images/equpment/sprayer-Neptune-HTP-Gold.webp";
-      }
-      if (all.contains("kisan")) {
-        return "images/equpment/sprayer-KisanCraft16L.webp";
-      }
-      if (all.contains("power")) {
-        return "images/equpment/power-Sprayer.jpg";
-      }
-      return "images/equpment/power-Sprayer.jpg";
-    }
-
-    // Seed drill
-    if (all.contains("seed") || all.contains("drill")) {
-      if (all.contains("mahindra")) {
-        return "images/equpment/seed-Drill-Mahindra-PlantMaster.jpg";
-      }
-      return "images/equpment/seed-Drill-John-Deere-750A.jpg";
-    }
-
-    // Trailer
-    if (all.contains("trailer")) {
-      if (all.contains("single")) {
-        return "images/equpment/trailer-Single-Axle.jpg";
-      }
-      return "images/equpment/trailer-Double-Axle.jpg";
-    }
-
-    // Transplanter
-    if (all.contains("transplant")) {
-      if (all.contains("yanmar")) {
-        return "images/equpment/transplanter-YANMAR-VP7.jpg";
-      }
-      return "images/equpment/transplanter-Kubota-SPV-6MD.webp";
-    }
-
-    // Fertilizer spreader
-    if (all.contains("fertilizer") || all.contains("spreader")) {
-      return "images/equpment/fertilizer-Spreader (2).png";
-    }
-
-    // Grass cutter
-    if (all.contains("grass") || all.contains("cutter")) {
-      return "images/equpment/grass-Cutter.jpeg";
-    }
-
-    return null;
   }
 
   Widget _heroFallback(String type) {
@@ -393,7 +292,11 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
 
   Widget _modernDetailsView(EquipmentDetails e) {
     final type = (e.equipmentType.isEmpty) ? "Equipment" : e.equipmentType;
-    final heroAsset = _assetForDetails(e);
+    final heroAsset = EquipmentImageAsset.resolve(
+      equipmentType: e.equipmentType,
+      forCrop: e.forCrop,
+      id: e.id,
+    );
 
     return Stack(
       children: [
@@ -419,15 +322,11 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // ✅ dynamic image by equipment type
-                    if (heroAsset != null)
-                      Image.asset(
-                        heroAsset,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _heroFallback(type),
-                      )
-                    else
-                      _heroFallback(type),
+                    Image.asset(
+                      heroAsset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _heroFallback(type),
+                    ),
 
                     Container(
                       decoration: BoxDecoration(
@@ -522,52 +421,15 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          e.ownerName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textDark,
-                            fontSize: 15.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Contact: ${e.ownerContact}",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark.withOpacity(0.60),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkGreen.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.call_rounded,
-                            size: 16, color: AppColors.darkGreen),
-                        SizedBox(width: 6),
-                        Text(
-                          "Call",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.darkGreen,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      e.ownerName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textDark,
+                        fontSize: 15.5,
+                      ),
                     ),
                   ),
                 ],
