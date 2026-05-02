@@ -24,6 +24,10 @@ class _LaborListScreenState extends State<LaborListScreen> {
   bool _loadingMeta = false;
   bool _metaInit = false;
 
+  /// Only apply [ModalRoute] arguments once. `didChangeDependencies` runs again
+  /// when returning from labour details; re-applying null args was clearing search/results.
+  bool _routeArgsApplied = false;
+
   /// When true: recommendation + semantic search. When false: normal keyword/name search.
   bool _useSemanticSearch = true;
 
@@ -35,19 +39,22 @@ class _LaborListScreenState extends State<LaborListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final a = ModalRoute.of(context)?.settings.arguments;
-    _args = (a is LaborSearchArgs)
-        ? a
-        : LaborSearchArgs(query: "", location: "Kurunegala", skill: null);
+    if (!_routeArgsApplied) {
+      _routeArgsApplied = true;
+      final a = ModalRoute.of(context)?.settings.arguments;
+      _args = (a is LaborSearchArgs)
+          ? a
+          : LaborSearchArgs(query: "", location: "Kurunegala", skill: null);
 
-    _searchCtrl.text = _args.query;
-    _selectedLocation = _args.location;
-    _selectedSkill = _args.skill;
-    if (!_metaInit) {
-      _metaInit = true;
-      _loadMeta();
+      _searchCtrl.text = _args.query;
+      _selectedLocation = _args.location;
+      _selectedSkill = _args.skill;
+      if (!_metaInit) {
+        _metaInit = true;
+        _loadMeta();
+      }
+      _fetch();
     }
-    _fetch();
   }
 
   Future<void> _loadMeta() async {

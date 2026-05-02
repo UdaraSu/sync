@@ -235,8 +235,11 @@ class _HomeDrawer extends StatelessWidget {
                     label: "Logout",
                     iconColor: AppColors.error,
                     onTap: () {
+                      // Keep Scaffold context: after closing the drawer, the drawer's
+                      // BuildContext is unmounted — dialogs/navigation would no-op or fail.
+                      final scaffoldContext = Scaffold.of(context).context;
                       Navigator.pop(context);
-                      _logout(context);
+                      _logout(scaffoldContext);
                     },
                   ),
                 ],
