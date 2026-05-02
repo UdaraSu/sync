@@ -565,15 +565,3 @@ class _LaborHireScreenState extends State<LaborHireScreen> {
     );
   }
 }
-
-class LaborSearchArgs {
-  final String query;
-  final String location;
-  final String? skill;
-
-  LaborSearchArgs({
-    required this.query,
-    required this.location,
-    this.skill,
-  });
-}

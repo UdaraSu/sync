@@ -203,3 +203,16 @@ class LaborApi {
     return _decodeJsonObject(res, endpointName: "Labour search");
   }
 }
+
+/// Route arguments for labour search / list screens.
+class LaborSearchArgs {
+  final String query;
+  final String location;
+  final String? skill;
+
+  LaborSearchArgs({
+    required this.query,
+    required this.location,
+    this.skill,
+  });
+}

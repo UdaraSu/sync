@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_colors.dart';
 import '../../services/app_routes.dart';
 import '../widgets/app_shell.dart';
 import '../../services/labor_api.dart';
 import '../../services/recommendation_api.dart';
-import 'labor_hire_screen.dart';
 
 class LaborListScreen extends StatefulWidget {
   const LaborListScreen({super.key});
@@ -16,6 +16,13 @@ class LaborListScreen extends StatefulWidget {
 class _LaborListScreenState extends State<LaborListScreen> {
   final _searchCtrl = TextEditingController();
   late LaborSearchArgs _args;
+
+  List<String> _locations = const ["Kurunegala"];
+  List<String> _skills = const [];
+  String _selectedLocation = "Kurunegala";
+  String? _selectedSkill;
+  bool _loadingMeta = false;
+  bool _metaInit = false;
 
   /// When true: recommendation + semantic search. When false: normal keyword/name search.
   bool _useSemanticSearch = true;
@@ -34,8 +41,36 @@ class _LaborListScreenState extends State<LaborListScreen> {
         : LaborSearchArgs(query: "", location: "Kurunegala", skill: null);
 
     _searchCtrl.text = _args.query;
+    _selectedLocation = _args.location;
+    _selectedSkill = _args.skill;
+    if (!_metaInit) {
+      _metaInit = true;
+      _loadMeta();
+    }
     _fetch();
   }
+
+  Future<void> _loadMeta() async {
+    setState(() => _loadingMeta = true);
+    try {
+      final locs = await LaborApi.getLocations();
+      final skills = await LaborApi.getSkills();
+      if (!mounted) return;
+      setState(() {
+        _locations = locs.isEmpty ? const ["Kurunegala"] : locs;
+        _skills = skills;
+        if (!_locations.contains(_selectedLocation)) {
+          _selectedLocation = _locations.first;
+        }
+      });
+    } catch (_) {
+      // keep fallbacks
+    } finally {
+      if (mounted) setState(() => _loadingMeta = false);
+    }
+  }
+
+  void _commitAndSearch() => _fetch();
 
   @override
   void dispose() {
@@ -47,6 +82,11 @@ class _LaborListScreenState extends State<LaborListScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _args = LaborSearchArgs(
+        query: _searchCtrl.text.trim(),
+        location: _selectedLocation,
+        skill: _selectedSkill,
+      );
     });
 
     try {
@@ -97,11 +137,6 @@ class _LaborListScreenState extends State<LaborListScreen> {
     }
   }
 
-  void _clearSearch() {
-    setState(() => _searchCtrl.clear());
-    _fetch();
-  }
-
   String? _extractLocationFromQuery(String raw) {
     final q = raw.trim();
     if (q.isEmpty) return null;
@@ -145,8 +180,6 @@ class _LaborListScreenState extends State<LaborListScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                     children: [
-                      _searchCard(),
-                      const SizedBox(height: 12),
                       if (_loading) ...[
                         _skeletonCard(),
                         const SizedBox(height: 12),
@@ -159,7 +192,7 @@ class _LaborListScreenState extends State<LaborListScreen> {
                         _emptyBox(
                           title: "No workers found",
                           subtitle:
-                              "Try different keyword or change filters in the previous screen.",
+                              "Try another keyword, location, or skill filter above.",
                           onRetry: _fetch,
                         ),
                       ] else ...[
@@ -188,30 +221,30 @@ class _LaborListScreenState extends State<LaborListScreen> {
                               ),
                             ),
                             child: Row(
-                              children: const [
-                                Expanded(
+                              children: [
+                                const Expanded(
                                   child: Divider(
                                     color: AppColors.border,
                                     thickness: 1,
                                   ),
                                 ),
-                                SizedBox(width: 10),
-                                Icon(
+                                const SizedBox(width: 10),
+                                const Icon(
                                   Icons.location_city_rounded,
                                   size: 16,
                                   color: AppColors.darkGreen,
                                 ),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Text(
                                   "Other locations",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.textDark,
                                     fontSize: 12.5,
                                   ),
                                 ),
-                                SizedBox(width: 10),
-                                Expanded(
+                                const SizedBox(width: 10),
+                                const Expanded(
                                   child: Divider(
                                     color: AppColors.border,
                                     thickness: 1,
@@ -258,13 +291,13 @@ class _LaborListScreenState extends State<LaborListScreen> {
 
   // ================= HERO =================
   Widget _heroHeader(int count) {
-    final skillLabel = (_args.skill == null || _args.skill!.trim().isEmpty)
+    final skillLabel = (_selectedSkill == null || _selectedSkill!.trim().isEmpty)
         ? "Any skill"
-        : _args.skill!.trim();
+        : _selectedSkill!.trim();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: const BoxDecoration(
         gradient: AppColors.heroGradient,
         borderRadius: BorderRadius.only(
@@ -273,6 +306,7 @@ class _LaborListScreenState extends State<LaborListScreen> {
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
@@ -280,98 +314,375 @@ class _LaborListScreenState extends State<LaborListScreen> {
                 icon: Icons.arrow_back_ios_new_rounded,
                 onTap: () => Navigator.pop(context),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  "Available Workers",
-                  style: TextStyle(
+                child:                 Text(
+                  "Hire Workers",
+                  style: GoogleFonts.poppins(
                     color: Colors.white.withOpacity(0.95),
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     fontSize: 16,
+                    letterSpacing: 0.15,
                   ),
                 ),
               ),
               _roundIconBtn(
                 icon: Icons.refresh_rounded,
-                onTap: _fetch,
+                onTap: () {
+                  _loadMeta();
+                  _fetch();
+                },
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              _args.location,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.97),
-                fontWeight: FontWeight.w900,
-                fontSize: 24,
-              ),
-            ),
           ),
           const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              "$count workers • Skill: $skillLabel",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.75),
+              "Find Skilled Workers",
+              style: GoogleFonts.poppins(
+                color: Colors.white.withOpacity(0.97),
                 fontWeight: FontWeight.w600,
-                fontSize: 12.8,
+                fontSize: 21,
+                height: 1.12,
+                letterSpacing: -0.2,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              _headerChip(
-                icon: Icons.location_on_rounded,
-                label: _args.location,
+          const SizedBox(height: 2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "$count results • $skillLabel • $_selectedLocation",
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: Colors.white.withOpacity(0.82),
+                fontWeight: FontWeight.w500,
+                fontSize: 12.5,
+                height: 1.35,
               ),
-              _headerChip(
-                icon: Icons.badge_rounded,
-                label: skillLabel,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                visualDensity: VisualDensity.compact,
               ),
-              _headerChip(
-                icon: Icons.people_alt_rounded,
-                label: "$count",
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Search & filter",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _useSemanticSearch ? "Smart" : "Name",
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: AppColors.textDark.withOpacity(0.72),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Transform.scale(
+                        scale: 0.82,
+                        alignment: Alignment.center,
+                        child: Switch(
+                          value: _useSemanticSearch,
+                          onChanged: (v) {
+                            setState(() => _useSemanticSearch = v);
+                            _fetch();
+                          },
+                          activeColor: AppColors.primary,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      if (_loadingMeta || _loading) ...[
+                        const SizedBox(width: 4),
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  _laborListSearchField(),
+                  const SizedBox(height: 6),
+                  _laborListLocationField(),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Skill",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                          color: AppColors.textDark.withOpacity(0.72),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: SizedBox(
+                          height: 32,
+                          child: _laborListSkillChipsHorizontal(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _headerChip({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withOpacity(0.20)),
+  Widget _laborListSearchField() {
+    return TextField(
+      controller: _searchCtrl,
+      textInputAction: TextInputAction.search,
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        height: 1.3,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textDark,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white.withOpacity(0.95)),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 140),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.92),
-                fontWeight: FontWeight.w800,
-                fontSize: 12.3,
+      onSubmitted: (_) => _commitAndSearch(),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: "Name or skill…",
+        hintStyle: GoogleFonts.inter(
+          fontSize: 13,
+          color: AppColors.textDark.withOpacity(0.45),
+          fontWeight: FontWeight.w500,
+        ),
+        prefixIcon: const Icon(Icons.search_rounded, size: 20),
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 40, minHeight: 36),
+        suffixIcon: _searchCtrl.text.trim().isEmpty
+            ? null
+            : IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                onPressed: () {
+                  setState(() => _searchCtrl.clear());
+                  _commitAndSearch();
+                },
+                icon: const Icon(Icons.close_rounded, size: 20),
+              ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        filled: true,
+        fillColor: AppColors.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
+  Widget _laborListLocationField() {
+    return DropdownButtonFormField<String>(
+      isDense: true,
+      value: _locations.contains(_selectedLocation)
+          ? _selectedLocation
+          : _locations.first,
+      items: _locations
+          .map(
+            (e) => DropdownMenuItem(
+              value: e,
+              child: Text(
+                e,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
+          )
+          .toList(),
+      onChanged: (v) {
+        if (v == null) return;
+        setState(() => _selectedLocation = v);
+        _commitAndSearch();
+      },
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+      ),
+      decoration: InputDecoration(
+        labelText: "Location",
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: const Icon(Icons.location_on_rounded, size: 20),
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 40, minHeight: 36),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        filled: true,
+        fillColor: AppColors.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+    );
+  }
+
+  Widget _laborListSkillChipsHorizontal() {
+    final allSkills = _skills.where((s) => s.trim().isNotEmpty).toList();
+
+    if (_loadingMeta && allSkills.isEmpty) {
+      return ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 6,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (_, __) => Container(
+          width: 72,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppColors.border),
           ),
-        ],
+        ),
+      );
+    }
+
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      children: [
+        _skillPillChip(
+          label: "Any skill",
+          selected: _selectedSkill == null,
+          onTap: () {
+            setState(() => _selectedSkill = null);
+            _commitAndSearch();
+          },
+          icon: Icons.all_inclusive_rounded,
+        ),
+        ...allSkills.take(36).map((s) {
+          final selected = _selectedSkill == s;
+          return Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: _skillPillChip(
+              label: s,
+              selected: selected,
+              onTap: () {
+                setState(() => _selectedSkill = selected ? null : s);
+                _commitAndSearch();
+              },
+              icon: Icons.badge_rounded,
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _skillPillChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required IconData icon,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withOpacity(0.18)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: selected
+                  ? AppColors.darkGreen
+                  : AppColors.textDark.withOpacity(0.55),
+            ),
+            const SizedBox(width: 4),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11.5,
+                  height: 1.15,
+                  color: selected
+                      ? AppColors.textDark
+                      : AppColors.textDark.withOpacity(0.75),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -384,123 +695,6 @@ class _LaborListScreenState extends State<LaborListScreen> {
         radius: 18,
         backgroundColor: Colors.white.withOpacity(0.14),
         child: Icon(icon, color: Colors.white),
-      ),
-    );
-  }
-
-  // ================= SEARCH CARD =================
-  Widget _searchCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                "Search",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textDark,
-                  fontSize: 14.5,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _useSemanticSearch ? "Smart" : "Name",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textDark.withOpacity(0.8),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Switch(
-                    value: _useSemanticSearch,
-                    onChanged: (v) {
-                      setState(() => _useSemanticSearch = v);
-                      _fetch();
-                    },
-                    activeColor: AppColors.primary,
-                  ),
-                ],
-              ),
-              if (_loading)
-                const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _useSemanticSearch
-                ? "Semantic: e.g. field worker below 1500"
-                : "Keyword: e.g. name, harvesting, weeding",
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textDark.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _searchCtrl,
-            onSubmitted: (_) => _fetch(),
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: "Type & press Enter (name, harvesting, weeding...)",
-              prefixIcon: const Icon(Icons.search_rounded),
-              suffixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_searchCtrl.text.trim().isNotEmpty)
-                    IconButton(
-                      tooltip: "Clear",
-                      onPressed: _clearSearch,
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  IconButton(
-                    tooltip: "Refresh",
-                    onPressed: _fetch,
-                    icon: const Icon(Icons.refresh_rounded),
-                  ),
-                ],
-              ),
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide:
-                    const BorderSide(color: AppColors.primary, width: 1.6),
-              ),
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-        ],
       ),
     );
   }
@@ -532,9 +726,11 @@ class _LaborListScreenState extends State<LaborListScreen> {
               "$count results • ${_args.location} • $skillTxt",
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: AppColors.textDark.withOpacity(0.75),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13.2,
+                color: AppColors.textDark.withOpacity(0.82),
+                height: 1.25,
               ),
             ),
           ),
@@ -542,11 +738,14 @@ class _LaborListScreenState extends State<LaborListScreen> {
           SizedBox(
             height: 46,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.tune_rounded),
-              label: const Text(
-                "Filters",
-                style: TextStyle(fontWeight: FontWeight.w900),
+              onPressed: _fetch,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(
+                "Refresh",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.15,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -579,18 +778,22 @@ class _LaborListScreenState extends State<LaborListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: AppColors.textDark,
-              )),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark.withOpacity(0.60),
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w500,
+              fontSize: 13.2,
+              height: 1.4,
+              color: AppColors.textDark.withOpacity(0.65),
             ),
           ),
           const SizedBox(height: 12),
@@ -599,9 +802,12 @@ class _LaborListScreenState extends State<LaborListScreen> {
             child: ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
+              label: Text(
                 "Retry",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.15,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -629,20 +835,22 @@ class _LaborListScreenState extends State<LaborListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Error loading workers",
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
               color: Colors.red,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             message,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Colors.red.withOpacity(0.85),
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w500,
+              fontSize: 13.2,
+              height: 1.35,
+              color: Colors.red.withOpacity(0.88),
             ),
           ),
           const SizedBox(height: 12),
@@ -651,9 +859,12 @@ class _LaborListScreenState extends State<LaborListScreen> {
             child: ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
+              label: Text(
                 "Retry",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.15,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -781,8 +992,9 @@ class _WorkerCardModern extends StatelessWidget {
                       backgroundColor: AppColors.primary.withOpacity(0.16),
                       child: Text(
                         _initials(worker.name),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
                           color: AppColors.textDark,
                         ),
                       ),
@@ -796,9 +1008,10 @@ class _WorkerCardModern extends StatelessWidget {
                             worker.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
                               fontSize: 15.5,
+                              letterSpacing: -0.15,
                               color: AppColors.textDark,
                             ),
                           ),
@@ -813,9 +1026,11 @@ class _WorkerCardModern extends StatelessWidget {
                                   worker.location,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textDark.withOpacity(0.65),
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12.8,
+                                    color:
+                                        AppColors.textDark.withOpacity(0.68),
                                   ),
                                 ),
                               ),
@@ -829,8 +1044,9 @@ class _WorkerCardModern extends StatelessWidget {
                       children: [
                         Text(
                           "LKR ${worker.hourlyRate.toStringAsFixed(0)}/hr",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
                             color: AppColors.darkGreen,
                           ),
                         ),
@@ -846,8 +1062,8 @@ class _WorkerCardModern extends StatelessWidget {
                           ),
                           child: Text(
                             "Match ${scorePct.toStringAsFixed(0)}%",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
                               color: scColor,
                               fontSize: 11.5,
                             ),
@@ -873,8 +1089,9 @@ class _WorkerCardModern extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       worker.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
                         color: AppColors.textDark,
                       ),
                     ),
@@ -889,8 +1106,8 @@ class _WorkerCardModern extends StatelessWidget {
                       ),
                       child: Text(
                         worker.labourType,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
                           color: AppColors.darkGreen,
                           fontSize: 12,
                         ),
@@ -932,10 +1149,11 @@ class _WorkerCardModern extends StatelessWidget {
       ),
       child: Text(
         s,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: AppColors.textDark.withOpacity(0.75),
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          color: AppColors.textDark.withOpacity(0.78),
           fontSize: 12,
+          height: 1.25,
         ),
       ),
     );

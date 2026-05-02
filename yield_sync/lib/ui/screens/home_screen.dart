@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
 import '../../services/app_routes.dart';
+import '../../services/labor_api.dart';
 import '../../services/seasonal_market_advisory_service.dart';
 import '../../services/seasonal_notification_service.dart';
 import '../../services/weather_service.dart';
@@ -93,7 +94,15 @@ class HomeScreen extends StatelessWidget {
                 _BottomNavItem(
                   icon: Icons.groups_rounded,
                   label: "Labour",
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.laborHire),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.laborList,
+                    arguments: LaborSearchArgs(
+                      query: "",
+                      location: "Kurunegala",
+                      skill: null,
+                    ),
+                  ),
                 ),
                 _BottomNavItem(
                   icon: Icons.storefront_rounded,
@@ -490,7 +499,12 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
         subtitle: "Skilled workers",
         icon: Icons.groups_rounded,
         iconBg: const Color(0xFF15B77E),
-        route: AppRoutes.laborHire,
+        route: AppRoutes.laborList,
+        routeArguments: LaborSearchArgs(
+          query: "",
+          location: "Kurunegala",
+          skill: null,
+        ),
       ),
       _ActionItem(
         title: "Rent Equipment",
@@ -782,7 +796,11 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                     padding: const EdgeInsets.only(right: 10),
                     child: _OfferTile(
                       item: a,
-                      onTap: () => Navigator.pushNamed(context, a.route!),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        a.route!,
+                        arguments: a.routeArguments,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -1925,6 +1943,7 @@ class _ActionItem {
   final IconData icon;
   final Color iconBg;
   final String? route;
+  final Object? routeArguments;
 
   const _ActionItem({
     required this.title,
@@ -1932,6 +1951,7 @@ class _ActionItem {
     required this.icon,
     required this.iconBg,
     this.route,
+    this.routeArguments,
   });
 }
 

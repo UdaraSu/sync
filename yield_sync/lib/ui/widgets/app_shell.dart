@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_colors.dart';
 import '../../services/app_routes.dart';
 
@@ -58,8 +59,9 @@ class AppShell extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           "Home",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
                             color: AppColors.textDark.withOpacity(0.90),
                           ),
                         ),
