@@ -79,8 +79,29 @@ class _LaborHireScreenState extends State<LaborHireScreen> {
                   children: [
                     _whiteCard(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final bannerW = constraints.maxWidth + 32;
+                              return Transform.translate(
+                                offset: const Offset(-16, -16),
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(22),
+                                  ),
+                                  child: Image.asset(
+                                    'assets/images/farmerhead.png',
+                                    width: bannerW,
+                                    fit: BoxFit.fitWidth,
+                                    alignment: Alignment.topCenter,
+                                    gaplessPlayback: true,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               const Text(

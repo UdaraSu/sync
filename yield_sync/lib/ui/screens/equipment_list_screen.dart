@@ -284,7 +284,6 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: const BoxDecoration(
         gradient: AppColors.heroGradient,
         borderRadius: BorderRadius.only(
@@ -292,180 +291,200 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
           bottomRight: Radius.circular(28),
         ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              _roundIconBtn(
-                icon: Icons.arrow_back_ios_new_rounded,
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  "Rent Equipment",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.95),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    letterSpacing: 0.15,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    _roundIconBtn(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Rent Equipment",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withOpacity(0.95),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          letterSpacing: 0.15,
+                        ),
+                      ),
+                    ),
+                    _roundIconBtn(
+                      icon: Icons.refresh_rounded,
+                      onTap: () {
+                        _loadMeta();
+                        _fetch();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Find Equipment",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withOpacity(0.97),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 21,
+                      height: 1.12,
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
-              ),
-              _roundIconBtn(
-                icon: Icons.refresh_rounded,
-                onTap: () {
-                  _loadMeta();
-                  _fetch();
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "Find Equipment",
-              style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.97),
-                fontWeight: FontWeight.w600,
-                fontSize: 21,
-                height: 1.12,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "$typeLabel • $_selectedLocation",
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.82),
-                fontWeight: FontWeight.w500,
-                fontSize: 12.5,
-                height: 1.35,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
+                const SizedBox(height: 2),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "$typeLabel • $_selectedLocation",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withOpacity(0.82),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12.5,
+                      height: 1.35,
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                visualDensity: VisualDensity.compact,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Search & filter",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _useSemanticSearch ? "Smart" : "Keyword",
-                        style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          color: AppColors.textDark.withOpacity(0.72),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Transform.scale(
-                        scale: 0.82,
-                        alignment: Alignment.center,
-                        child: Switch(
-                          value: _useSemanticSearch,
-                          onChanged: (v) {
-                            setState(() => _useSemanticSearch = v);
-                            _fetch();
-                          },
-                          activeColor: AppColors.primary,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                      if (_loadingMeta || _loading) ...[
-                        const SizedBox(width: 4),
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  _equipmentListSearchField(),
-                  const SizedBox(height: 14),
-                  _equipmentListLocationField(),
-                  const SizedBox(height: 14),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Type",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                          color: AppColors.textDark.withOpacity(0.72),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: SizedBox(
-                          height: 32,
-                          child: _equipmentListTypeChipsHorizontal(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Sort by",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                          color: AppColors.textDark.withOpacity(0.72),
-                        ),
-                      ),
-                      const Spacer(),
-                      _SortButton(
-                        mode: _sort,
-                        onChanged: (m) {
-                          setState(() => _sort = m);
-                          _applySortAndFilter();
-                        },
-                      ),
-                    ],
+          ),
+          const SizedBox(height: 8),
+          Image.asset(
+            'assets/images/equipmenthead.png',
+            width: double.infinity,
+            fit: BoxFit.fitWidth,
+            alignment: Alignment.topCenter,
+            gaplessPlayback: true,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
                 ],
+              ),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Search & filter",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _useSemanticSearch ? "Smart" : "Keyword",
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            color: AppColors.textDark.withOpacity(0.72),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Transform.scale(
+                          scale: 0.82,
+                          alignment: Alignment.center,
+                          child: Switch(
+                            value: _useSemanticSearch,
+                            onChanged: (v) {
+                              setState(() => _useSemanticSearch = v);
+                              _fetch();
+                            },
+                            activeColor: AppColors.primary,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                        if (_loadingMeta || _loading) ...[
+                          const SizedBox(width: 4),
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    _equipmentListSearchField(),
+                    const SizedBox(height: 14),
+                    _equipmentListLocationField(),
+                    const SizedBox(height: 14),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Type",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.5,
+                            color: AppColors.textDark.withOpacity(0.72),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: SizedBox(
+                            height: 32,
+                            child: _equipmentListTypeChipsHorizontal(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Sort by",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.5,
+                            color: AppColors.textDark.withOpacity(0.72),
+                          ),
+                        ),
+                        const Spacer(),
+                        _SortButton(
+                          mode: _sort,
+                          onChanged: (m) {
+                            setState(() => _sort = m);
+                            _applySortAndFilter();
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -737,133 +756,146 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
 
     return AppShell(
       currentIndex: 0,
-      child: Column(
-        children: [
-          _heroHeader(),
-
-          // ===== LIST =====
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _fetch,
-              child: _loading
-                  ? CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverPadding(
-                          padding:
-                              const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          sliver: SliverToBoxAdapter(
-                            child: _equipmentSkeletonGrid(),
-                          ),
-                        ),
-                      ],
-                    )
-                  : _error != null
-                      ? ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                          children: [
-                            _ErrorBox(message: _error!, onRetry: _fetch),
-                          ],
-                        )
-                      : _items.isEmpty
-                          ? ListView(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                              children: [
-                                _EmptyBox(
-                                  title: "No equipment found",
-                                  subtitle:
-                                      "Try another keyword or select another district/type.",
-                                  onRetry: _fetch,
-                                ),
-                              ],
-                            )
-                          : CustomScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              slivers: [
-                                if (primary.isNotEmpty)
-                                  SliverPadding(
-                                    padding: EdgeInsets.fromLTRB(
-                                      16,
-                                      0,
-                                      16,
-                                      others.isNotEmpty ? 0 : 16,
-                                    ),
-                                    sliver: SliverToBoxAdapter(
-                                      child:
-                                          _equipmentCardsWrap(primary),
-                                    ),
-                                  ),
-                                if (primary.isNotEmpty &&
-                                    others.isNotEmpty)
-                                  SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          16, 18, 16, 10),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary
-                                              .withOpacity(0.08),
-                                          borderRadius:
-                                              BorderRadius.circular(999),
-                                          border: Border.all(
-                                            color: AppColors.primary
-                                                .withOpacity(0.45),
-                                            width: 1.2,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Expanded(
-                                              child: Divider(
-                                                color: AppColors.border,
-                                                thickness: 1,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Icon(
-                                              Icons.location_city_rounded,
-                                              size: 16,
-                                              color: AppColors.darkGreen,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              "Other locations",
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.textDark,
-                                                fontSize: 12.5,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Expanded(
-                                              child: Divider(
-                                                color: AppColors.border,
-                                                thickness: 1,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                if (others.isNotEmpty)
-                                  SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        16, 0, 16, 16),
-                                    sliver: SliverToBoxAdapter(
-                                      child: _equipmentCardsWrap(others),
-                                    ),
-                                  ),
-                              ],
-                            ),
+      child: SizedBox.expand(
+        child: RefreshIndicator(
+          onRefresh: _fetch,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
+            slivers: [
+              SliverToBoxAdapter(child: _heroHeader()),
+              ..._equipmentListResultSlivers(primary, others),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  List<Widget> _equipmentListResultSlivers(
+    List<EquipmentListItem> primary,
+    List<EquipmentListItem> others,
+  ) {
+    if (_loading) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: _equipmentSkeletonGrid(),
+          ),
+        ),
+      ];
+    }
+    if (_error != null) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: _ErrorBox(message: _error!, onRetry: _fetch),
+          ),
+        ),
+      ];
+    }
+    if (_items.isEmpty) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: _EmptyBox(
+              title: "No equipment found",
+              subtitle:
+                  "Try another keyword or select another district/type.",
+              onRetry: _fetch,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    final slivers = <Widget>[];
+
+    if (primary.isNotEmpty) {
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            others.isNotEmpty ? 0 : 16,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: _equipmentCardsWrap(primary),
+          ),
+        ),
+      );
+    }
+
+    if (primary.isNotEmpty && others.isNotEmpty) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.45),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Divider(
+                      color: AppColors.border,
+                      thickness: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(
+                    Icons.location_city_rounded,
+                    size: 16,
+                    color: AppColors.darkGreen,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Other locations",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Divider(
+                      color: AppColors.border,
+                      thickness: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (others.isNotEmpty) {
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: _equipmentCardsWrap(others),
+          ),
+        ),
+      );
+    }
+
+    return slivers;
   }
 }
 
