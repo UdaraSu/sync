@@ -592,7 +592,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       return 0;
     });
 
-    // Best Offers: 5 cards; Soil Quality is the 3rd (index 2).
+    // Best Offers: Soil Quality is 3rd; then Rent, Match, Market (6 cards total).
     final soilOffer =
         actions.firstWhere((a) => a.title == "Soil Quality");
     final withoutSoil =
@@ -600,7 +600,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
     final bestOffersForRow = [
       ...withoutSoil.take(2),
       soilOffer,
-      ...withoutSoil.skip(2).take(2),
+      ...withoutSoil.skip(2), // Rent Equipment, Match Crop, Market
     ];
 
     final now = DateTime.now();
