@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/form_validators.dart';
 import '../../services/labour_equipment_post_service.dart';
 import '../../services/nav.dart';
 import '../widgets/app_text_field.dart';
+import '../widgets/post_availability_schedule.dart';
 import '../widgets/primary_button.dart';
 
 class AddEquipmentPostScreen extends StatefulWidget {
@@ -14,13 +16,6 @@ class AddEquipmentPostScreen extends StatefulWidget {
 
 class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _equipmentTypeCtrl = TextEditingController();
-  final _forCropCtrl = TextEditingController();
-  final _nearestDistrictCtrl = TextEditingController();
-  final _seasonCtrl = TextEditingController();
-  final _conditionCtrl = TextEditingController();
-  final _availableDayCtrl = TextEditingController();
-  final _availableTimeCtrl = TextEditingController();
   final _hourlyRateCtrl = TextEditingController();
   final _dailyRateCtrl = TextEditingController();
   final _ownerNameCtrl = TextEditingController();
@@ -28,15 +23,79 @@ class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
 
   bool _saving = false;
 
+  String? _selectedEquipmentType;
+  String? _selectedCropType;
+  String? _selectedDistrict;
+  String? _selectedSeason;
+  String? _selectedCondition;
+  String? _selectedAvailability;
+  TimeOfDay? _availableFrom;
+  TimeOfDay? _availableTo;
+
+  static const List<String> _equipmentTypes = [
+    'Tractor',
+    'Combine Harvester',
+    'Harvester',
+    'Rotavator',
+    'Plough',
+    'Power Sprayer',
+    'Seed Drill',
+    'Trailer',
+    'Water Pump',
+    'Transplanter',
+    'Grass Cutter',
+    'Fertilizer Spreader',
+    'Other',
+  ];
+
+  static const List<String> _districts = [
+    'Alawwa',
+    'Bingiriya',
+    'Galgamuwa',
+    'Giriulla',
+    'Hettipola',
+    'Hiriyala',
+    'Ibbagamuwa',
+    'Kuliyapitiya',
+    'Kurunegala',
+    'Maho',
+    'Maspotha',
+    'Mawathagama',
+    'Narammala',
+    'Nikaweratiya',
+    'Pannala',
+    'Polgahawela',
+    'Rideegama',
+    'Wariyapola',
+    'Weerambugedara',
+  ];
+
+  static const List<String> _seasons = ['Yala', 'Maha'];
+
+  static const List<String> _cropTypes = [
+    'Paddy',
+    'Maize',
+    'Onion',
+    'Chickpea',
+    'Vegetables',
+    'Other',
+  ];
+
+  static const List<String> _conditions = [
+    'Excellent',
+    'Good',
+    'Fair',
+    'Needs service',
+  ];
+
+  static const List<String> _availabilityOptions = [
+    'Weekdays',
+    'Weekends',
+    'Both',
+  ];
+
   @override
   void dispose() {
-    _equipmentTypeCtrl.dispose();
-    _forCropCtrl.dispose();
-    _nearestDistrictCtrl.dispose();
-    _seasonCtrl.dispose();
-    _conditionCtrl.dispose();
-    _availableDayCtrl.dispose();
-    _availableTimeCtrl.dispose();
     _hourlyRateCtrl.dispose();
     _dailyRateCtrl.dispose();
     _ownerNameCtrl.dispose();
@@ -44,34 +103,88 @@ class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
     super.dispose();
   }
 
-  String? _req(String? v, String msg) {
-    if (v == null || v.trim().isEmpty) return msg;
-    return null;
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final suffix = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $suffix';
+  }
+
+  String _formatLocation(String city) {
+    if (city.toLowerCase() == 'kurunegala') return 'Kurunegala';
+    return 'Kurunegala, $city';
+  }
+
+  Future<void> _pickFromTime() async {
+    final selected = await showAppTimePicker(
+      context,
+      initialTime: _availableFrom ?? const TimeOfDay(hour: 8, minute: 0),
+      helpText: 'Start time',
+    );
+    if (selected == null) return;
+    setState(() => _availableFrom = selected);
+  }
+
+  Future<void> _pickToTime() async {
+    final selected = await showAppTimePicker(
+      context,
+      initialTime: _availableTo ?? const TimeOfDay(hour: 17, minute: 0),
+      helpText: 'End time',
+    );
+    if (selected == null) return;
+    setState(() => _availableTo = selected);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_availableFrom == null || _availableTo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select available time range')),
+      );
+      return;
+    }
+    final fromMinutes = _availableFrom!.hour * 60 + _availableFrom!.minute;
+    final toMinutes = _availableTo!.hour * 60 + _availableTo!.minute;
+    if (toMinutes <= fromMinutes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '"Available to" must be later than "Available from"',
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
     try {
       final hourly = double.tryParse(_hourlyRateCtrl.text.trim()) ?? 0.0;
       final daily = double.tryParse(_dailyRateCtrl.text.trim()) ?? 0.0;
       if (hourly <= 0 && daily <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter hourly or daily rate (LKR)')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Enter at least one rate: hourly or daily (LKR)',
+              ),
+            ),
+          );
+        }
         setState(() => _saving = false);
         return;
       }
 
+      final availableTime =
+          '${_formatTimeOfDay(_availableFrom!)} - ${_formatTimeOfDay(_availableTo!)}';
+
       await LabourEquipmentPostService.createEquipmentPost(
-        equipmentType: _equipmentTypeCtrl.text.trim(),
-        forCrop: _forCropCtrl.text.trim(),
-        nearestMajorDistrict: _nearestDistrictCtrl.text.trim(),
-        season: _seasonCtrl.text.trim(),
-        condition: _conditionCtrl.text.trim(),
-        availableDay: _availableDayCtrl.text.trim(),
-        availableTime: _availableTimeCtrl.text.trim(),
+        equipmentType: _selectedEquipmentType!,
+        forCrop: _selectedCropType!,
+        nearestMajorDistrict: _formatLocation(_selectedDistrict!),
+        season: _selectedSeason!,
+        condition: _selectedCondition!,
+        availableDay: _selectedAvailability!,
+        availableTime: availableTime,
         hourlyRateLkr: hourly > 0 ? hourly : (daily / 8),
         dailyRateLkr: daily > 0 ? daily : (hourly * 8),
         ownerName: _ownerNameCtrl.text.trim(),
@@ -80,7 +193,9 @@ class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Equipment listed. It will appear in the list.')),
+        const SnackBar(
+          content: Text('Equipment listed. It will appear in the list.'),
+        ),
       );
       Nav.back(context);
     } catch (e) {
@@ -122,88 +237,131 @@ class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _equipmentTypeCtrl,
+                            _dropdownField(
                               label: 'Equipment type',
-                              hint: 'e.g. Tractor, Harvester, Sprayer',
-                              validator: (v) => _req(v, 'Equipment type required'),
+                              value: _selectedEquipmentType,
+                              items: _equipmentTypes,
+                              onChanged: (value) =>
+                                  setState(() => _selectedEquipmentType = value),
+                              validatorMessage: 'Equipment type required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _forCropCtrl,
+                            _dropdownField(
                               label: 'For crop',
-                              hint: 'e.g. Paddy, Rice',
+                              value: _selectedCropType,
+                              items: _cropTypes,
+                              onChanged: (value) =>
+                                  setState(() => _selectedCropType = value),
+                              validatorMessage: 'Crop type required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _nearestDistrictCtrl,
-                              label: 'Nearest district / area',
-                              hint: 'e.g. Kurunegala - Town',
-                              validator: (v) => _req(v, 'Location required'),
+                            _dropdownField(
+                              label: 'Location (Kurunegala)',
+                              value: _selectedDistrict,
+                              items: _districts,
+                              onChanged: (value) =>
+                                  setState(() => _selectedDistrict = value),
+                              validatorMessage: 'Location required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _seasonCtrl,
+                            _dropdownField(
                               label: 'Season',
-                              hint: 'e.g. Yala, Maha',
+                              value: _selectedSeason,
+                              items: _seasons,
+                              onChanged: (value) =>
+                                  setState(() => _selectedSeason = value),
+                              validatorMessage: 'Season required',
                             ),
                             const SizedBox(height: 12),
-                            AppTextField(
-                              controller: _conditionCtrl,
+                            _dropdownField(
                               label: 'Condition',
-                              hint: 'e.g. Good, Excellent',
+                              value: _selectedCondition,
+                              items: _conditions,
+                              onChanged: (value) =>
+                                  setState(() => _selectedCondition = value),
+                              validatorMessage: 'Condition required',
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AppTextField(
-                                    controller: _availableDayCtrl,
-                                    label: 'Available day',
-                                    hint: 'e.g. Weekdays',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: AppTextField(
-                                    controller: _availableTimeCtrl,
-                                    label: 'Available time',
-                                    hint: 'e.g. 8am-5pm',
-                                  ),
-                                ),
-                              ],
+                            _dropdownField(
+                              label: 'Available days',
+                              value: _selectedAvailability,
+                              items: _availabilityOptions,
+                              onChanged: (value) =>
+                                  setState(() => _selectedAvailability = value),
+                              validatorMessage: 'Availability required',
+                            ),
+                            const SizedBox(height: 12),
+                            PostAvailabilityTimeSection(
+                              fromDisplay: _availableFrom == null
+                                  ? null
+                                  : _formatTimeOfDay(_availableFrom!),
+                              toDisplay: _availableTo == null
+                                  ? null
+                                  : _formatTimeOfDay(_availableTo!),
+                              onPickFrom: _pickFromTime,
+                              onPickTo: _pickToTime,
+                              onClearFrom: () =>
+                                  setState(() => _availableFrom = null),
+                              onClearTo: () =>
+                                  setState(() => _availableTo = null),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _hourlyRateCtrl,
                               label: 'Hourly rate (LKR)',
                               hint: 'e.g. 2000',
-                              keyboardType: TextInputType.number,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              validator: (v) =>
+                                  FormValidators.optionalPositiveNumber(
+                                v,
+                                'Hourly rate (LKR)',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _dailyRateCtrl,
                               label: 'Daily rate (LKR)',
                               hint: 'e.g. 15000',
-                              keyboardType: TextInputType.number,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              validator: (v) =>
+                                  FormValidators.optionalPositiveNumber(
+                                v,
+                                'Daily rate (LKR)',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _ownerNameCtrl,
                               label: 'Owner name',
-                              hint: 'Your name (or leave blank to use profile)',
+                              hint:
+                                  'Your name (or leave blank to use profile)',
+                              textCapitalization: TextCapitalization.words,
+                              validator: (v) =>
+                                  FormValidators.optionalPersonName(
+                                v,
+                                fieldLabel: 'Owner name',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _ownerContactCtrl,
                               label: 'Contact number',
-                              hint: '07XXXXXXXX',
+                              hint: '07XXXXXXXX (10 digits)',
                               keyboardType: TextInputType.phone,
+                              validator: FormValidators.optionalPhone10Digits,
                             ),
                             const SizedBox(height: 18),
                             PrimaryButton(
                               text: _saving ? 'Adding...' : 'List equipment',
-                              icon: _saving ? Icons.hourglass_top_rounded : Icons.add_business_rounded,
+                              icon: _saving
+                                  ? Icons.hourglass_top_rounded
+                                  : Icons.add_business_rounded,
                               onPressed: _saving ? null : _submit,
                               isLoading: _saving,
                             ),
@@ -271,6 +429,88 @@ class _AddEquipmentPostScreenState extends State<AddEquipmentPostScreen> {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _dropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required String validatorMessage,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: AppColors.darkGreen,
+      ),
+      borderRadius: BorderRadius.circular(14),
+      dropdownColor: Colors.white,
+      style: const TextStyle(
+        color: AppColors.textDark,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: _inputDecoration(label: label),
+      hint: const Text(
+        'Tap to open list',
+        style: TextStyle(
+          color: AppColors.muted,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      items: items
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+      validator: (v) => v == null || v.isEmpty ? validatorMessage : null,
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    Widget? suffixIcon,
+  }) {
+    const borderRadius = BorderRadius.all(Radius.circular(14));
+    return InputDecoration(
+      labelText: label,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: const Color(0xFFF7FCFA),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      labelStyle: const TextStyle(
+        color: AppColors.muted,
+        fontWeight: FontWeight.w600,
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.primary, width: 1.6),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: AppColors.error, width: 1.4),
+      ),
     );
   }
 }

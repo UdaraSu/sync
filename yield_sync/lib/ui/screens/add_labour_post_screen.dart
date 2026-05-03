@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/form_validators.dart';
 import '../../services/labour_equipment_post_service.dart';
 import '../../services/nav.dart';
 import '../widgets/app_text_field.dart';
+import '../widgets/post_availability_schedule.dart';
 import '../widgets/primary_button.dart';
 
 class AddLabourPostScreen extends StatefulWidget {
@@ -90,11 +92,6 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
     super.dispose();
   }
 
-  String? _req(String? v, String msg) {
-    if (v == null || v.trim().isEmpty) return msg;
-    return null;
-  }
-
   String _formatTimeOfDay(TimeOfDay time) {
     final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     final minute = time.minute.toString().padLeft(2, '0');
@@ -108,18 +105,20 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
   }
 
   Future<void> _pickFromTime() async {
-    final selected = await showTimePicker(
-      context: context,
+    final selected = await showAppTimePicker(
+      context,
       initialTime: _availableFrom ?? const TimeOfDay(hour: 8, minute: 0),
+      helpText: 'Start time',
     );
     if (selected == null) return;
     setState(() => _availableFrom = selected);
   }
 
   Future<void> _pickToTime() async {
-    final selected = await showTimePicker(
-      context: context,
+    final selected = await showAppTimePicker(
+      context,
       initialTime: _availableTo ?? const TimeOfDay(hour: 17, minute: 0),
+      helpText: 'End time',
     );
     if (selected == null) return;
     setState(() => _availableTo = selected);
@@ -146,13 +145,6 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
     try {
       final hourlyRate = double.tryParse(_hourlyRateCtrl.text.trim()) ?? 0.0;
       final experienceYears = int.tryParse(_experienceYearsCtrl.text.trim()) ?? 0;
-      if (hourlyRate <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a valid hourly rate (LKR)')),
-        );
-        setState(() => _saving = false);
-        return;
-      }
 
       await LabourEquipmentPostService.createLabourPost(
         name: _nameCtrl.text.trim(),
@@ -215,7 +207,11 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
                               controller: _nameCtrl,
                               label: 'Full name',
                               hint: 'Your name',
-                              validator: (v) => _req(v, 'Name required'),
+                              textCapitalization: TextCapitalization.words,
+                              validator: (v) => FormValidators.requiredPersonName(
+                                v,
+                                fieldLabel: 'Full name',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             _dropdownField(
@@ -266,41 +262,50 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
                               validatorMessage: 'Availability required',
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _timeField(
-                                    label: 'Available from',
-                                    value: _availableFrom == null
-                                        ? null
-                                        : _formatTimeOfDay(_availableFrom!),
-                                    onTap: _pickFromTime,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _timeField(
-                                    label: 'Available to',
-                                    value: _availableTo == null ? null : _formatTimeOfDay(_availableTo!),
-                                    onTap: _pickToTime,
-                                  ),
-                                ),
-                              ],
+                            PostAvailabilityTimeSection(
+                              fromDisplay: _availableFrom == null
+                                  ? null
+                                  : _formatTimeOfDay(_availableFrom!),
+                              toDisplay: _availableTo == null
+                                  ? null
+                                  : _formatTimeOfDay(_availableTo!),
+                              onPickFrom: _pickFromTime,
+                              onPickTo: _pickToTime,
+                              onClearFrom: () =>
+                                  setState(() => _availableFrom = null),
+                              onClearTo: () =>
+                                  setState(() => _availableTo = null),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _hourlyRateCtrl,
                               label: 'Hourly rate (LKR)',
                               hint: 'e.g. 500',
-                              keyboardType: TextInputType.number,
-                              validator: (v) => _req(v, 'Hourly rate required'),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              validator: (v) =>
+                                  FormValidators.requiredPositiveNumber(
+                                v,
+                                'Hourly rate (LKR)',
+                              ),
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: _experienceYearsCtrl,
                               label: 'Experience (years)',
                               hint: 'e.g. 5',
-                              keyboardType: TextInputType.number,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                signed: false,
+                                decimal: false,
+                              ),
+                              validator: (v) =>
+                                  FormValidators.optionalWholeYears(
+                                v,
+                                'Experience (years)',
+                              ),
                             ),
                             const SizedBox(height: 18),
                             PrimaryButton(
@@ -395,10 +400,10 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
       ),
       decoration: _inputDecoration(label: label),
       hint: const Text(
-        'Select option',
+        'Tap to open list',
         style: TextStyle(
           color: AppColors.muted,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
       ),
       items: items
@@ -417,30 +422,6 @@ class _AddLabourPostScreenState extends State<AddLabourPostScreen> {
           .toList(),
       onChanged: onChanged,
       validator: (v) => v == null || v.isEmpty ? validatorMessage : null,
-    );
-  }
-
-  Widget _timeField({
-    required String label,
-    required String? value,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: InputDecorator(
-        decoration: _inputDecoration(
-          label: label,
-          suffixIcon: const Icon(Icons.access_time_rounded, color: AppColors.darkGreen),
-        ),
-        child: Text(
-          value ?? 'Select time',
-          style: TextStyle(
-            color: value == null ? AppColors.muted : AppColors.textDark,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 
