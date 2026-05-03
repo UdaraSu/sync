@@ -147,11 +147,16 @@ def recommend():
 
                 df_lab = df_lab.sort_values("score", ascending=False).head(top_k)
 
+                # Include the same profile fields as /api/labour/search so the app
+                # can show skill, experience, and jobs in Smart (recommendation) mode.
+                _labour_rec_cols = [
+                    "Labour_ID", "Name", "Location", "Labour_Type",
+                    "Season", "Crop_Type", "Hourly_Rate", "Rating", "score",
+                    "Skill_Level", "Experience_Years", "Jobs_Completed",
+                    "Available_Day", "Available_Time",
+                ]
                 labour_results = df_lab[
-                    [c for c in [
-                        "Labour_ID", "Name", "Location", "Labour_Type",
-                        "Season", "Crop_Type", "Hourly_Rate", "Rating", "score"
-                    ] if c in df_lab.columns]
+                    [c for c in _labour_rec_cols if c in df_lab.columns]
                 ].to_dict(orient="records")
 
         # 4) Equipment recommendations
@@ -198,14 +203,25 @@ def recommend():
             model_ids = {r["Labour_ID"] for r in labour_results}
             labour_cols = [
                 "Labour_ID", "Name", "Location", "Labour_Type",
-                "Season", "Crop_Type", "Hourly_Rate", "Rating"
+                "Season", "Crop_Type", "Hourly_Rate", "Rating",
+                "Skill_Level", "Experience_Years", "Jobs_Completed",
+                "Available_Day", "Available_Time",
             ]
+            _labour_num_cols = frozenset(
+                {"Hourly_Rate", "Rating", "Experience_Years", "Jobs_Completed"}
+            )
             for row in firestore_labour:
                 if not labour_row_public_visible(row):
                     continue
                 lid = row.get("Labour_ID") or ""
                 if lid and lid not in model_ids:
-                    rec = {c: row.get(c, "" if c not in ("Hourly_Rate", "Rating") else 0) for c in labour_cols}
+                    rec = {
+                        c: row.get(
+                            c,
+                            0 if c in _labour_num_cols else "",
+                        )
+                        for c in labour_cols
+                    }
                     try:
                         rec["Hourly_Rate"] = float(row.get("Hourly_Rate") or 0)
                     except (TypeError, ValueError):
@@ -214,6 +230,18 @@ def recommend():
                         rec["Rating"] = float(row.get("Rating") or 0)
                     except (TypeError, ValueError):
                         rec["Rating"] = 0.0
+                    try:
+                        rec["Experience_Years"] = int(
+                            float(row.get("Experience_Years") or 0)
+                        )
+                    except (TypeError, ValueError):
+                        rec["Experience_Years"] = 0
+                    try:
+                        rec["Jobs_Completed"] = int(
+                            float(row.get("Jobs_Completed") or 0)
+                        )
+                    except (TypeError, ValueError):
+                        rec["Jobs_Completed"] = 0
                     rec["score"] = 0.25
                     labour_results.append(rec)
             labour_results.sort(key=lambda r: (-(r.get("score") or 0), -(r.get("Rating") or 0)))
