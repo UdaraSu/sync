@@ -21,8 +21,13 @@ class EquipmentListScreen extends StatefulWidget {
 
 class _EquipmentListScreenState extends State<EquipmentListScreen> {
   final _searchCtrl = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   late EquipmentSearchArgs _args;
+
+  bool _showScrollToTop = false;
+
+  static const double _scrollToTopThreshold = 160;
 
   List<String> _locations = const ["Kurunegala"];
   List<String> _types = const [];
@@ -173,7 +178,23 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onEquipmentListScroll);
+  }
+
+  void _onEquipmentListScroll() {
+    if (!_scrollController.hasClients) return;
+    final show = _scrollController.offset > _scrollToTopThreshold;
+    if (show != _showScrollToTop && mounted) {
+      setState(() => _showScrollToTop = show);
+    }
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onEquipmentListScroll);
+    _scrollController.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -757,17 +778,55 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
     return AppShell(
       currentIndex: 0,
       child: SizedBox.expand(
-        child: RefreshIndicator(
-          onRefresh: _fetch,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: RefreshIndicator(
+                onRefresh: _fetch,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverToBoxAdapter(child: _heroHeader()),
+                    ..._equipmentListResultSlivers(primary, others),
+                  ],
+                ),
+              ),
             ),
-            slivers: [
-              SliverToBoxAdapter(child: _heroHeader()),
-              ..._equipmentListResultSlivers(primary, others),
-            ],
-          ),
+            if (_showScrollToTop)
+              Positioned(
+                right: 14,
+                bottom: 14,
+                child: Material(
+                  elevation: 6,
+                  shadowColor: Colors.black26,
+                  shape: const CircleBorder(),
+                  color: AppColors.primary,
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(11),
+                      child: Icon(
+                        Icons.keyboard_arrow_up_rounded,
+                        color: AppColors.darkGreen,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

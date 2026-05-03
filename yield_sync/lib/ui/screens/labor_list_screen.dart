@@ -15,7 +15,12 @@ class LaborListScreen extends StatefulWidget {
 
 class _LaborListScreenState extends State<LaborListScreen> {
   final _searchCtrl = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   late LaborSearchArgs _args;
+
+  bool _showScrollToTop = false;
+
+  static const double _scrollToTopThreshold = 160;
 
   List<String> _locations = const ["Kurunegala"];
   List<String> _skills = const [];
@@ -86,7 +91,23 @@ class _LaborListScreenState extends State<LaborListScreen> {
   void _commitAndSearch() => _fetch();
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onLaborListScroll);
+  }
+
+  void _onLaborListScroll() {
+    if (!_scrollController.hasClients) return;
+    final show = _scrollController.offset > _scrollToTopThreshold;
+    if (show != _showScrollToTop && mounted) {
+      setState(() => _showScrollToTop = show);
+    }
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onLaborListScroll);
+    _scrollController.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -183,24 +204,63 @@ class _LaborListScreenState extends State<LaborListScreen> {
     return AppShell(
       currentIndex: 0,
       child: SizedBox.expand(
-        child: RefreshIndicator(
-          onRefresh: _fetch,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: RefreshIndicator(
+                onRefresh: _fetch,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverToBoxAdapter(child: _heroHeader()),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate(
+                          _laborListResultWidgets(
+                              context, list, primary, others),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            slivers: [
-              SliverToBoxAdapter(child: _heroHeader()),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate(
-                    _laborListResultWidgets(context, list, primary, others),
+            if (_showScrollToTop)
+              Positioned(
+                right: 14,
+                bottom: 14,
+                child: Material(
+                  elevation: 6,
+                  shadowColor: Colors.black26,
+                  shape: const CircleBorder(),
+                  color: AppColors.primary,
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(11),
+                      child: Icon(
+                        Icons.keyboard_arrow_up_rounded,
+                        color: AppColors.darkGreen,
+                        size: 26,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
