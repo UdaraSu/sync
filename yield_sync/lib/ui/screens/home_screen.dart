@@ -3,11 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../utils/app_colors.dart';
+import '../../data/crop_type_guides.dart';
 import '../../services/app_routes.dart';
 import '../../services/labor_api.dart';
 import '../../services/seasonal_market_advisory_service.dart';
 import '../../services/seasonal_notification_service.dart';
 import '../../services/weather_service.dart';
+import '../widgets/crop_type_guide_sheet.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -439,6 +441,9 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
   late DateTime _today;
   late Future<WeatherInfo> _weatherFuture;
 
+  /// Selected chip under "Crop Types" (crop name; empty until user taps one).
+  String _selectedCropType = "";
+
   @override
   void initState() {
     super.initState();
@@ -492,6 +497,14 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       await _weatherFuture;
     } catch (_) {
       if (mounted) setState(() {});
+    }
+  }
+
+  void _onCropTypeChipTap(String label) {
+    setState(() => _selectedCropType = label);
+    final guide = kCropTypeGuides[label];
+    if (guide != null && mounted) {
+      showCropTypeGuideSheet(context, guide);
     }
   }
 
@@ -797,39 +810,42 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
               ),
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Text(
-                  "Crop Types",
-                  style: GoogleFonts.poppins(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
-                  ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Crop Types",
+                style: GoogleFonts.poppins(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.soilQuality),
-                  child: Text(
-                    "See all",
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.darkGreen,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 6),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _FieldChip(label: "All", active: true),
-                  _FieldChip(label: "Rice"),
-                  _FieldChip(label: "Radish"),
-                  _FieldChip(label: "Beetroot"),
-                  _FieldChip(label: "Red Onion"),
+                  _FieldChip(
+                    label: "Rice",
+                    active: _selectedCropType == "Rice",
+                    onTap: () => _onCropTypeChipTap("Rice"),
+                  ),
+                  _FieldChip(
+                    label: "Radish",
+                    active: _selectedCropType == "Radish",
+                    onTap: () => _onCropTypeChipTap("Radish"),
+                  ),
+                  _FieldChip(
+                    label: "Beetroot",
+                    active: _selectedCropType == "Beetroot",
+                    onTap: () => _onCropTypeChipTap("Beetroot"),
+                  ),
+                  _FieldChip(
+                    label: "Red Onion",
+                    active: _selectedCropType == "Red Onion",
+                    onTap: () => _onCropTypeChipTap("Red Onion"),
+                  ),
                 ],
               ),
             ),
@@ -838,7 +854,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
             Row(
               children: [
                 Text(
-                  "Best Offers",
+                  "Core Features",
                   style: GoogleFonts.poppins(
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
@@ -1892,26 +1908,38 @@ class _HeaderMetric extends StatelessWidget {
 class _FieldChip extends StatelessWidget {
   final String label;
   final bool active;
+  final VoidCallback onTap;
 
-  const _FieldChip({required this.label, this.active = false});
+  const _FieldChip({
+    required this.label,
+    this.active = false,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? AppColors.primary.withOpacity(0.25) : Colors.white,
+      child: Material(
+        color: active ? AppColors.primary.withOpacity(0.25) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textDark.withOpacity(0.9),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark.withOpacity(0.9),
+              ),
+            ),
           ),
         ),
       ),
