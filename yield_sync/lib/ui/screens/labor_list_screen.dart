@@ -48,7 +48,11 @@ class _LaborListScreenState extends State<LaborListScreen> {
 
       _searchCtrl.text = _args.query;
       _selectedLocation = _args.location;
-      _selectedSkill = _args.skill;
+      final skillArg = _args.skill?.trim();
+      _selectedSkill =
+          (skillArg != null && skillArg.toLowerCase() == "unknown")
+              ? null
+              : _args.skill;
       if (!_metaInit) {
         _metaInit = true;
         _loadMeta();
@@ -65,7 +69,9 @@ class _LaborListScreenState extends State<LaborListScreen> {
       if (!mounted) return;
       setState(() {
         _locations = locs.isEmpty ? const ["Kurunegala"] : locs;
-        _skills = skills;
+        _skills = skills
+            .where((s) => s.trim().toLowerCase() != "unknown")
+            .toList();
         if (!_locations.contains(_selectedLocation)) {
           _selectedLocation = _locations.first;
         }
@@ -178,14 +184,12 @@ class _LaborListScreenState extends State<LaborListScreen> {
       currentIndex: 0,
       child: Column(
         children: [
-          _heroHeader(list.length),
+          _heroHeader(),
           Expanded(
-            child: Stack(
-              children: [
-                RefreshIndicator(
-                  onRefresh: _fetch,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+            child: RefreshIndicator(
+              onRefresh: _fetch,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                     children: [
                       if (_loading) ...[
                         _skeletonCard(),
@@ -277,27 +281,14 @@ class _LaborListScreenState extends State<LaborListScreen> {
                     ],
                   ),
                 ),
-
-                // Sticky bottom info/CTA
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 12,
-                  child: SafeArea(
-                    top: false,
-                    child: _stickyFooter(list.length),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
         ],
       ),
     );
   }
 
   // ================= HERO =================
-  Widget _heroHeader(int count) {
+  Widget _heroHeader() {
     final skillLabel = (_selectedSkill == null || _selectedSkill!.trim().isEmpty)
         ? "Any skill"
         : _selectedSkill!.trim();
@@ -360,7 +351,7 @@ class _LaborListScreenState extends State<LaborListScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              "$count results • $skillLabel • $_selectedLocation",
+              "$skillLabel • $_selectedLocation",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
@@ -440,9 +431,9 @@ class _LaborListScreenState extends State<LaborListScreen> {
                   ),
                   const SizedBox(height: 6),
                   _laborListSearchField(),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 14),
                   _laborListLocationField(),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 14),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -561,7 +552,7 @@ class _LaborListScreenState extends State<LaborListScreen> {
         color: AppColors.textDark,
       ),
       decoration: InputDecoration(
-        labelText: "Location",
+        labelText: "Your Location",
         labelStyle: GoogleFonts.inter(
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
@@ -591,7 +582,11 @@ class _LaborListScreenState extends State<LaborListScreen> {
   }
 
   Widget _laborListSkillChipsHorizontal() {
-    final allSkills = _skills.where((s) => s.trim().isNotEmpty).toList();
+    final allSkills = _skills
+        .where((s) =>
+            s.trim().isNotEmpty &&
+            s.trim().toLowerCase() != "unknown")
+        .toList();
 
     if (_loadingMeta && allSkills.isEmpty) {
       return ListView.separated(
@@ -702,69 +697,6 @@ class _LaborListScreenState extends State<LaborListScreen> {
         radius: 18,
         backgroundColor: Colors.white.withOpacity(0.14),
         child: Icon(icon, color: Colors.white),
-      ),
-    );
-  }
-
-  // ================= Sticky footer =================
-  Widget _stickyFooter(int count) {
-    final skillTxt = (_args.skill == null || _args.skill!.trim().isEmpty)
-        ? "Any skill"
-        : _args.skill!.trim();
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 22,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              "$count results • ${_args.location} • $skillTxt",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                fontSize: 13.2,
-                color: AppColors.textDark.withOpacity(0.82),
-                height: 1.25,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: _fetch,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                "Refresh",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.darkGreen,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

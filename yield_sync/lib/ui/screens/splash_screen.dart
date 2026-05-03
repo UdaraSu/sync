@@ -154,7 +154,7 @@ class SplashScreen extends StatelessWidget {
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Text(
-                                "Empowered Happy Frmers",
+                                "Empowered Happy Farmers",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
                                   fontSize: 13.5 * s,
