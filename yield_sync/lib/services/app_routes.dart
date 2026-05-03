@@ -25,7 +25,6 @@ class AppRoutes {
   static const laborList = "/labor/list";
   static const laborDetails = "/labor/details";
 
-  static const equipmentRent = "/equipment/rent";
   static const equipmentList = "/equipment/list";
   static const equipmentDetails = "/equipment/details";
 

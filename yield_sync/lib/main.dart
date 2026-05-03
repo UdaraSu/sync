@@ -24,7 +24,6 @@ import 'ui/screens/market_update_data_screen.dart';
 import 'ui/screens/labor_hire_screen.dart';
 import 'ui/screens/labor_list_screen.dart';
 import 'ui/screens/labor_details_screen.dart';
-import 'ui/screens/equipment_rent_screen.dart';
 import 'ui/screens/equipment_list_screen.dart';
 import 'ui/screens/equipment_details_screen.dart';
 import 'ui/screens/match_crop_screen.dart';
@@ -76,7 +75,6 @@ class YieldSyncApp extends StatelessWidget {
         AppRoutes.laborHire: (_) => const LaborHireScreen(),
         AppRoutes.laborList: (_) => const LaborListScreen(),
         AppRoutes.laborDetails: (_) => const LaborDetailsScreen(),
-        AppRoutes.equipmentRent: (_) => const EquipmentRentScreen(),
         AppRoutes.equipmentList: (_) => const EquipmentListScreen(),
         AppRoutes.equipmentDetails: (_) => const EquipmentDetailsScreen(),
         AppRoutes.matchCrop: (_) => const MatchCropScreen(),

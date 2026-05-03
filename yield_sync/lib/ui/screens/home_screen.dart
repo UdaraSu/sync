@@ -10,6 +10,7 @@ import '../../services/seasonal_market_advisory_service.dart';
 import '../../services/seasonal_notification_service.dart';
 import '../../services/weather_service.dart';
 import '../widgets/crop_type_guide_sheet.dart';
+import 'equipment_rent_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -577,7 +578,12 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
         subtitle: "Tractors and more",
         icon: Icons.agriculture_rounded,
         iconBg: const Color(0xFF1C9BE8),
-        route: AppRoutes.equipmentRent,
+        route: AppRoutes.equipmentList,
+        routeArguments: EquipmentSearchArgs(
+          query: "",
+          location: "Kurunegala",
+          type: "",
+        ),
       ),
       _ActionItem(
         title: "Match Crop",
