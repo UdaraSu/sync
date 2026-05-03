@@ -4,6 +4,23 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/crop_type_guides.dart';
 import '../../utils/app_colors.dart';
 
+/// WebP (or jpg) hero in `assets/images/crops/`. Keys match [CropTypeGuide.cropName].
+String? _cropGuideHeroAssetPath(CropTypeGuide guide) {
+  switch (guide.cropName) {
+    case "Rice":
+      // `rice.webp` when present; project currently ships `rice.jpg`.
+      return "assets/images/crops/rice.webp";
+    case "Beetroot":
+      return "assets/images/crops/beetroot.webp";
+    case "Radish":
+      return "assets/images/crops/radish.webp";
+    case "Red Onion":
+      return "assets/images/crops/red onion.webp";
+    default:
+      return null;
+  }
+}
+
 /// Opens a scrollable sheet with headings, sub-headings, and body copy.
 Future<void> showCropTypeGuideSheet(
   BuildContext context,
@@ -39,6 +56,7 @@ Future<void> showCropTypeGuideSheet(
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
@@ -79,6 +97,7 @@ Future<void> showCropTypeGuideSheet(
                   ],
                 ),
               ),
+              _CropGuideBanner(path: _cropGuideHeroAssetPath(guide)),
               Expanded(
                 child: ListView(
                   controller: scrollController,
@@ -118,6 +137,45 @@ Future<void> showCropTypeGuideSheet(
       },
     ),
   );
+}
+
+/// Full-width banner below the title row and above the Overview section.
+class _CropGuideBanner extends StatelessWidget {
+  final String? path;
+
+  const _CropGuideBanner({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = path;
+    if (p == null || p.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Image.asset(
+            p,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) {
+              if (p.endsWith("rice.webp")) {
+                return Image.asset(
+                  "assets/images/crops/rice.jpg",
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) =>
+                      const ColoredBox(color: Color(0xFFE8EDE4)),
+                );
+              }
+              return const ColoredBox(color: Color(0xFFE8EDE4));
+            },
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Widget _sectionHeading(String text) {

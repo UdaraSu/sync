@@ -444,6 +444,9 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
   /// Selected chip under "Crop Types" (crop name; empty until user taps one).
   String _selectedCropType = "";
 
+  /// Core Features: horizontal strip vs 2-column grid ("View all" / "View less").
+  bool _coreFeaturesExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -863,9 +866,13 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.market),
+                  onPressed: () {
+                    setState(() {
+                      _coreFeaturesExpanded = !_coreFeaturesExpanded;
+                    });
+                  },
                   child: Text(
-                    "View all",
+                    _coreFeaturesExpanded ? "View less" : "View all",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       color: AppColors.darkGreen,
@@ -875,24 +882,55 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
               ],
             ),
             const SizedBox(height: 6),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: bestOffersForRow.map((a) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: _OfferTile(
-                      item: a,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        a.route!,
-                        arguments: a.routeArguments,
+            if (!_coreFeaturesExpanded)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: bestOffersForRow.map((a) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: _OfferTile(
+                        item: a,
+                        expandWidth: false,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          a.route!,
+                          arguments: a.routeArguments,
+                        ),
                       ),
-                    ),
+                    );
+                  }).toList(),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const spacing = 10.0;
+                  final maxW = constraints.maxWidth;
+                  final tileW = maxW > spacing
+                      ? (maxW - spacing) / 2
+                      : maxW;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    alignment: WrapAlignment.start,
+                    children: bestOffersForRow.map((a) {
+                      return SizedBox(
+                        width: tileW,
+                        child: _OfferTile(
+                          item: a,
+                          expandWidth: true,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            a.route!,
+                            arguments: a.routeArguments,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   );
-                }).toList(),
+                },
               ),
-            ),
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -1470,10 +1508,13 @@ class _MiniCategoryCard extends StatelessWidget {
 class _OfferTile extends StatelessWidget {
   final _ActionItem item;
   final VoidCallback onTap;
+  /// In a 2-column grid, fill cell width; otherwise fixed [172] for horizontal list.
+  final bool expandWidth;
 
   const _OfferTile({
     required this.item,
     required this.onTap,
+    this.expandWidth = false,
   });
 
   String? _imageForTitle(String title) {
@@ -1499,9 +1540,7 @@ class _OfferTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 172,
-      child: Material(
+    final inner = Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
@@ -1522,6 +1561,7 @@ class _OfferTile extends StatelessWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   height: 112,
@@ -1643,8 +1683,11 @@ class _OfferTile extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
+    if (expandWidth) {
+      return SizedBox(width: double.infinity, child: inner);
+    }
+    return SizedBox(width: 172, child: inner);
   }
 }
 
