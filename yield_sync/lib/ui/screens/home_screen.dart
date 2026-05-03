@@ -800,7 +800,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
             Row(
               children: [
                 Text(
-                  "My Fields",
+                  "Crop Types",
                   style: GoogleFonts.poppins(
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
@@ -826,10 +826,10 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
               child: Row(
                 children: [
                   _FieldChip(label: "All", active: true),
-                  _FieldChip(label: "Carrots"),
-                  _FieldChip(label: "Vegetable"),
-                  _FieldChip(label: "Fruit"),
-                  _FieldChip(label: "Pumpkin"),
+                  _FieldChip(label: "Rice"),
+                  _FieldChip(label: "Radish"),
+                  _FieldChip(label: "Beetroot"),
+                  _FieldChip(label: "Red Onion"),
                 ],
               ),
             ),
