@@ -579,7 +579,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       ),
       _ActionItem(
         title: "Soil Quality",
-        subtitle: "pH / EC / NPK",
+        subtitle: "Live soil & environment",
         icon: Icons.grass_rounded,
         iconBg: const Color(0xFF2BB3D1),
         route: AppRoutes.soilQuality,
@@ -591,6 +591,17 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
       if (b.title == "Hire Labour") return 1;
       return 0;
     });
+
+    // Best Offers: 5 cards; Soil Quality is the 3rd (index 2).
+    final soilOffer =
+        actions.firstWhere((a) => a.title == "Soil Quality");
+    final withoutSoil =
+        offers.where((a) => a.title != "Soil Quality").toList();
+    final bestOffersForRow = [
+      ...withoutSoil.take(2),
+      soilOffer,
+      ...withoutSoil.skip(2).take(2),
+    ];
 
     final now = DateTime.now();
     return RefreshIndicator(
@@ -851,7 +862,7 @@ class _HomeDashboardViewState extends State<_HomeDashboardView> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: offers.take(5).map((a) {
+                children: bestOffersForRow.map((a) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: _OfferTile(
@@ -1463,6 +1474,9 @@ class _OfferTile extends StatelessWidget {
     }
     if (t.contains("equipment") || t.contains("tractor")) {
       return "assets/images/tractor.jpeg";
+    }
+    if (t.contains("soil")) {
+      return "assets/images/soilbanner.jpg";
     }
     return null;
   }
